@@ -1,0 +1,318 @@
+2025-11-21T08:21:40.490588223Z [inf]  
+2025-11-21T08:21:44.400566257Z [inf]  [35m[Region: asia-southeast1][0m
+2025-11-21T08:21:44.442402898Z [inf]  
+2025-11-21T08:21:44.442442245Z [inf]  [38;2;125;86;243m╭─────────────────╮[0m
+2025-11-21T08:21:44.442456567Z [inf]  [38;2;125;86;243m│[0m Railpack 0.13.0 [38;2;125;86;243m│[0m
+2025-11-21T08:21:44.442459881Z [inf]  [38;2;125;86;243m╰─────────────────╯[0m
+2025-11-21T08:21:44.442464448Z [inf]  
+2025-11-21T08:21:44.442467512Z [inf]  [97m↳ Detected Node[0m
+2025-11-21T08:21:44.442470506Z [inf]  [97m↳ Using npm package manager[0m
+2025-11-21T08:21:44.442473722Z [inf]  
+2025-11-21T08:21:44.442476875Z [inf]  [1mPackages[0m
+2025-11-21T08:21:44.442479937Z [inf]  [38;5;238m──────────[0m
+2025-11-21T08:21:44.442482952Z [inf]  [95mnode[0m  [38;5;238m│[0m  [96m22.21.1[0m  [38;5;238m│[0m  railpack default (22)
+2025-11-21T08:21:44.442485896Z [inf]  
+2025-11-21T08:21:44.442488693Z [inf]  [1mSteps[0m
+2025-11-21T08:21:44.442491583Z [inf]  [38;5;238m──────────[0m
+2025-11-21T08:21:44.442494464Z [inf]  [95m▸ install[0m
+2025-11-21T08:21:44.442497185Z [inf]  [38;5;245m$[0m [1mnpm ci[0m
+2025-11-21T08:21:44.442500250Z [inf]  
+2025-11-21T08:21:44.442502986Z [inf]  [95m▸ build[0m
+2025-11-21T08:21:44.442505761Z [inf]  [38;5;245m$[0m [1mnpm run build[0m
+2025-11-21T08:21:44.442508784Z [inf]  
+2025-11-21T08:21:44.442511612Z [inf]  [1mDeploy[0m
+2025-11-21T08:21:44.442514416Z [inf]  [38;5;238m──────────[0m
+2025-11-21T08:21:44.442517013Z [inf]  [38;5;245m$[0m [1mnpm run start[0m
+2025-11-21T08:21:44.442519677Z [inf]  
+2025-11-21T08:21:44.442522392Z [inf]  
+2025-11-21T08:21:44.443554642Z [inf]  Successfully prepared Railpack plan for build
+2025-11-21T08:21:44.443587033Z [inf]  
+2025-11-21T08:21:44.443594300Z [inf]  
+2025-11-21T08:21:44.444010976Z [inf]  context: gftx-mlfC
+2025-11-21T08:21:44.586105093Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:21:44.586155564Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:21:44.586168128Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:21:44.595478037Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:21:44.596808718Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0
+2025-11-21T08:21:45.117371718Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0
+2025-11-21T08:21:45.117431782Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0@sha256:6abf5c09474a5a6a6d2317725bf69c99708336e5ad0e6cbae7c5e746a586cc52
+2025-11-21T08:21:45.117447499Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0@sha256:6abf5c09474a5a6a6d2317725bf69c99708336e5ad0e6cbae7c5e746a586cc52
+2025-11-21T08:21:45.122325382Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0@sha256:6abf5c09474a5a6a6d2317725bf69c99708336e5ad0e6cbae7c5e746a586cc52
+2025-11-21T08:21:45.207147835Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:21:45.207199453Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:21:45.207226437Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:21:45.217789257Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:21:45.389275118Z [inf]  mkdir -p /app/node_modules/.cache
+2025-11-21T08:21:45.389320272Z [inf]  copy /root/.local/state/mise
+2025-11-21T08:21:45.389330586Z [inf]  [railpack] secrets hash
+2025-11-21T08:21:45.389338039Z [inf]  copy /mise/shims
+2025-11-21T08:21:45.389346450Z [inf]  copy / /app
+2025-11-21T08:21:45.389357879Z [inf]  copy package.json
+2025-11-21T08:21:45.389367789Z [inf]  npm ci
+2025-11-21T08:21:45.389387679Z [inf]  create mise config
+2025-11-21T08:21:45.389396170Z [inf]  mkdir /etc/mise
+2025-11-21T08:21:45.389405071Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:latest
+2025-11-21T08:21:45.389413352Z [inf]  install apt packages: libatomic1
+2025-11-21T08:21:45.389419724Z [inf]  loading .
+2025-11-21T08:21:45.389425026Z [inf]  copy package-lock.json
+2025-11-21T08:21:45.389430159Z [inf]  install mise packages: node
+2025-11-21T08:21:45.389439149Z [inf]  copy /mise/installs
+2025-11-21T08:21:45.389444321Z [inf]  npm run build
+2025-11-21T08:21:45.389449255Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2025-11-21T08:21:45.389454375Z [inf]  copy /etc/mise/config.toml
+2025-11-21T08:21:45.389461344Z [inf]  copy /usr/local/bin/mise
+2025-11-21T08:21:45.389480351Z [inf]  [railpack] merge $packages:apt:runtime, $packages:mise, $build, $build
+2025-11-21T08:21:45.389498454Z [inf]  copy /app
+2025-11-21T08:21:45.389504252Z [inf]  copy /root/.cache
+2025-11-21T08:21:45.389514652Z [inf]  copy /app/node_modules
+2025-11-21T08:21:45.389532783Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:latest
+2025-11-21T08:21:45.389538135Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2025-11-21T08:21:45.389545983Z [inf]  [railpack] secrets hash
+2025-11-21T08:21:45.389550939Z [inf]  loading .
+2025-11-21T08:21:45.389559039Z [inf]  loading .
+2025-11-21T08:21:45.877632181Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:latest
+2025-11-21T08:21:45.877686048Z [inf]  install apt packages: libatomic1
+2025-11-21T08:21:46.016478986Z [inf]  Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+
+2025-11-21T08:21:46.024578841Z [inf]  Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+
+2025-11-21T08:21:46.024636807Z [inf]  Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+
+2025-11-21T08:21:46.076333148Z [inf]  Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8791 kB]
+
+2025-11-21T08:21:46.127860655Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2025-11-21T08:21:46.129839688Z [inf]  mkdir /etc/mise
+2025-11-21T08:21:46.129864706Z [inf]  create mise config
+2025-11-21T08:21:46.129875602Z [inf]  loading .
+2025-11-21T08:21:46.129887234Z [inf]  [railpack] secrets hash
+2025-11-21T08:21:46.129911902Z [inf]  create mise config
+2025-11-21T08:21:46.129931060Z [inf]  install mise packages: node
+2025-11-21T08:21:46.132872046Z [inf]  Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+
+2025-11-21T08:21:46.144633856Z [inf]  [railpack] secrets hash
+2025-11-21T08:21:46.157016309Z [inf]  Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [287 kB]
+
+2025-11-21T08:21:46.165180662Z [inf]  loading .
+2025-11-21T08:21:46.430756608Z [inf]  mise node@22.21.1    install
+
+2025-11-21T08:21:46.433549491Z [inf]  mise node@22.21.1    download node-v22.21.1-linux-x64.tar.gz
+
+2025-11-21T08:21:47.041056643Z [inf]  Fetched 9340 kB in 1s (9040 kB/s)
+Reading package lists...
+2025-11-21T08:21:47.15559349Z [inf]  mise node@22.21.1    extract node-v22.21.1-linux-x64.tar.gz
+
+2025-11-21T08:21:47.438842712Z [inf]  
+
+2025-11-21T08:21:47.453220404Z [inf]  Reading package lists...
+2025-11-21T08:21:47.849259756Z [inf]  
+
+2025-11-21T08:21:47.860452972Z [inf]  Building dependency tree...
+2025-11-21T08:21:47.943218772Z [inf]  
+Reading state information...
+2025-11-21T08:21:47.943543769Z [inf]  
+
+2025-11-21T08:21:48.057321689Z [inf]  The following NEW packages will be installed:
+
+2025-11-21T08:21:48.057746371Z [inf]    libatomic1
+
+2025-11-21T08:21:48.071228241Z [inf]  0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 9376 B of archives.
+After this operation, 46.1 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main amd64 libatomic1 amd64 12.2.0-14+deb12u1 [9376 B]
+
+2025-11-21T08:21:48.167245419Z [inf]  debconf: delaying package configuration, since apt-utils is not installed
+
+2025-11-21T08:21:48.171090318Z [inf]  mise node@22.21.1    node -v
+
+2025-11-21T08:21:48.177337143Z [inf]  mise node@22.21.1    v22.21.1
+
+2025-11-21T08:21:48.17807101Z [inf]  mise node@22.21.1    npm -v
+
+2025-11-21T08:21:48.185829601Z [inf]  Fetched 9376 B in 0s (0 B/s)
+
+2025-11-21T08:21:48.200151416Z [inf]  Selecting previously unselected package libatomic1:amd64.
+(Reading database ... 
+2025-11-21T08:21:48.20162015Z [inf]  (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%
+2025-11-21T08:21:48.205748228Z [inf]  (Reading database ... 75%
+2025-11-21T08:21:48.208556725Z [inf]  (Reading database ... 80%
+2025-11-21T08:21:48.210773756Z [inf]  (Reading database ... 85%
+2025-11-21T08:21:48.213257062Z [inf]  (Reading database ... 90%
+2025-11-21T08:21:48.216214693Z [inf]  (Reading database ... 95%
+2025-11-21T08:21:48.219745975Z [inf]  (Reading database ... 100%(Reading database ... 6622 files and directories currently installed.)
+
+2025-11-21T08:21:48.220142558Z [inf]  Preparing to unpack .../libatomic1_12.2.0-14+deb12u1_amd64.deb ...
+
+2025-11-21T08:21:48.222847116Z [inf]  Unpacking libatomic1:amd64 (12.2.0-14+deb12u1) ...
+
+2025-11-21T08:21:48.237735407Z [inf]  Setting up libatomic1:amd64 (12.2.0-14+deb12u1) ...
+
+2025-11-21T08:21:48.241219759Z [inf]  Processing triggers for libc-bin (2.36-9+deb12u13) ...
+
+2025-11-21T08:21:48.26729439Z [inf]  mise node@22.21.1    10.9.4
+
+2025-11-21T08:21:48.31469161Z [inf]  mise node@22.21.1  ✓ installed
+
+2025-11-21T08:21:48.938281520Z [inf]  install mise packages: node
+2025-11-21T08:21:48.939324086Z [inf]  mkdir -p /app/node_modules/.cache
+2025-11-21T08:21:48.957080345Z [inf]  install apt packages: libatomic1
+2025-11-21T08:21:49.091565250Z [inf]  mkdir -p /app/node_modules/.cache
+2025-11-21T08:21:49.092477444Z [inf]  copy package.json
+2025-11-21T08:21:49.176969198Z [inf]  copy package.json
+2025-11-21T08:21:49.178181528Z [inf]  copy package-lock.json
+2025-11-21T08:21:49.200451662Z [inf]  copy package-lock.json
+2025-11-21T08:21:49.201477273Z [inf]  npm ci
+2025-11-21T08:21:49.362232324Z [inf]  npm warn config production Use `--omit=dev` instead.
+
+2025-11-21T08:21:49.903670175Z [inf]  copy /mise/shims
+2025-11-21T08:21:49.903702485Z [inf]  copy /mise/installs
+2025-11-21T08:21:49.903711444Z [inf]  copy /usr/local/bin/mise
+2025-11-21T08:21:49.903718738Z [inf]  copy /etc/mise/config.toml
+2025-11-21T08:21:49.903725494Z [inf]  copy /root/.local/state/mise
+2025-11-21T08:21:51.011812257Z [inf]  npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+2025-11-21T08:21:52.598524407Z [inf]  npm warn deprecated @11labs/react@0.2.0: This package is no longer maintained. Please use @elevenlabs/react for the latest version
+
+2025-11-21T08:21:52.720054723Z [inf]  npm warn deprecated @11labs/client@0.2.0: This package is no longer maintained. Please use @elevenlabs/client for the latest version
+
+2025-11-21T08:21:58.529247318Z [err]  ERROR: failed to build: failed to receive status: rpc error: code = Unavailable desc = error reading from server: EOF
+2025-11-21T08:22:16.750629297Z [inf]  
+2025-11-21T08:22:20.551718338Z [inf]  [35m[Region: asia-southeast1][0m
+2025-11-21T08:22:20.605505455Z [inf]  
+2025-11-21T08:22:20.605560002Z [inf]  [38;2;125;86;243m╭─────────────────╮[0m
+2025-11-21T08:22:20.605565705Z [inf]  [38;2;125;86;243m│[0m Railpack 0.13.0 [38;2;125;86;243m│[0m
+2025-11-21T08:22:20.605569926Z [inf]  [38;2;125;86;243m╰─────────────────╯[0m
+2025-11-21T08:22:20.605575857Z [inf]  
+2025-11-21T08:22:20.605580382Z [inf]  [97m↳ Detected Node[0m
+2025-11-21T08:22:20.605584700Z [inf]  [97m↳ Using npm package manager[0m
+2025-11-21T08:22:20.605588842Z [inf]  
+2025-11-21T08:22:20.605592791Z [inf]  [1mPackages[0m
+2025-11-21T08:22:20.605597042Z [inf]  [38;5;238m──────────[0m
+2025-11-21T08:22:20.605601032Z [inf]  [95mnode[0m  [38;5;238m│[0m  [96m22.21.1[0m  [38;5;238m│[0m  railpack default (22)
+2025-11-21T08:22:20.605605062Z [inf]  
+2025-11-21T08:22:20.605609073Z [inf]  [1mSteps[0m
+2025-11-21T08:22:20.605613297Z [inf]  [38;5;238m──────────[0m
+2025-11-21T08:22:20.605617092Z [inf]  [95m▸ install[0m
+2025-11-21T08:22:20.605621127Z [inf]  [38;5;245m$[0m [1mnpm ci[0m
+2025-11-21T08:22:20.605625059Z [inf]  
+2025-11-21T08:22:20.605638055Z [inf]  [95m▸ build[0m
+2025-11-21T08:22:20.605642681Z [inf]  [38;5;245m$[0m [1mnpm run build[0m
+2025-11-21T08:22:20.605646595Z [inf]  
+2025-11-21T08:22:20.605650696Z [inf]  [1mDeploy[0m
+2025-11-21T08:22:20.605654714Z [inf]  [38;5;238m──────────[0m
+2025-11-21T08:22:20.605658452Z [inf]  [38;5;245m$[0m [1mnpm run start[0m
+2025-11-21T08:22:20.605662227Z [inf]  
+2025-11-21T08:22:20.605667265Z [inf]  
+2025-11-21T08:22:20.607198914Z [inf]  Successfully prepared Railpack plan for build
+2025-11-21T08:22:20.607233699Z [inf]  
+2025-11-21T08:22:20.607242669Z [inf]  
+2025-11-21T08:22:20.608036935Z [inf]  context: vthm-7EXY
+2025-11-21T08:22:20.805202746Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:22:20.805261203Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:22:20.805283187Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:22:20.819351212Z [inf]  [internal] load build definition from railpack-plan.json
+2025-11-21T08:22:20.821859897Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0
+2025-11-21T08:22:21.079301043Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0
+2025-11-21T08:22:21.079363742Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0@sha256:6abf5c09474a5a6a6d2317725bf69c99708336e5ad0e6cbae7c5e746a586cc52
+2025-11-21T08:22:21.079398443Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0@sha256:6abf5c09474a5a6a6d2317725bf69c99708336e5ad0e6cbae7c5e746a586cc52
+2025-11-21T08:22:21.084585355Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0@sha256:6abf5c09474a5a6a6d2317725bf69c99708336e5ad0e6cbae7c5e746a586cc52
+2025-11-21T08:22:21.084715490Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.13.0@sha256:6abf5c09474a5a6a6d2317725bf69c99708336e5ad0e6cbae7c5e746a586cc52
+2025-11-21T08:22:21.201753930Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:22:21.201826320Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:22:21.202311723Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:22:21.218185034Z [inf]  load build definition from railpack-plan.json
+2025-11-21T08:22:21.253479627Z [inf]  copy /mise/installs
+2025-11-21T08:22:21.253552642Z [inf]  copy /mise/shims
+2025-11-21T08:22:21.253566977Z [inf]  install mise packages: node
+2025-11-21T08:22:21.253575076Z [inf]  create mise config
+2025-11-21T08:22:21.253584502Z [inf]  mkdir /etc/mise
+2025-11-21T08:22:21.253593867Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2025-11-21T08:22:21.253616735Z [inf]  install apt packages: libatomic1
+2025-11-21T08:22:21.253624844Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:latest
+2025-11-21T08:22:21.253711477Z [inf]  copy /app/node_modules
+2025-11-21T08:22:21.253722989Z [inf]  npm run build
+2025-11-21T08:22:21.253730982Z [inf]  [railpack] secrets hash
+2025-11-21T08:22:21.253741994Z [inf]  copy / /app
+2025-11-21T08:22:21.253754104Z [inf]  npm ci
+2025-11-21T08:22:21.253773532Z [inf]  copy /usr/local/bin/mise
+2025-11-21T08:22:21.253785090Z [inf]  copy package.json
+2025-11-21T08:22:21.253795256Z [inf]  loading .
+2025-11-21T08:22:21.253808281Z [inf]  mkdir -p /app/node_modules/.cache
+2025-11-21T08:22:21.253818029Z [inf]  copy /root/.local/state/mise
+2025-11-21T08:22:21.253828908Z [inf]  copy /etc/mise/config.toml
+2025-11-21T08:22:21.253840349Z [inf]  copy /root/.cache
+2025-11-21T08:22:21.253852616Z [inf]  copy package-lock.json
+2025-11-21T08:22:21.253909830Z [inf]  [railpack] merge $packages:apt:runtime, $packages:mise, $build, $build
+2025-11-21T08:22:21.253925139Z [inf]  copy /app
+2025-11-21T08:22:21.253962847Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:latest
+2025-11-21T08:22:21.253975053Z [inf]  loading .
+2025-11-21T08:22:21.254007631Z [inf]  loading .
+2025-11-21T08:22:21.254038033Z [inf]  [railpack] secrets hash
+2025-11-21T08:22:21.254049884Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2025-11-21T08:22:21.518585682Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:latest
+2025-11-21T08:22:21.520798534Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2025-11-21T08:22:21.521911813Z [inf]  loading .
+2025-11-21T08:22:21.521951029Z [inf]  [railpack] secrets hash
+2025-11-21T08:22:21.534839307Z [inf]  [railpack] secrets hash
+2025-11-21T08:22:21.549780811Z [inf]  loading .
+2025-11-21T08:22:21.551059180Z [inf]  mkdir /etc/mise
+2025-11-21T08:22:21.551081495Z [inf]  create mise config
+2025-11-21T08:22:21.551092352Z [inf]  install mise packages: node
+2025-11-21T08:22:21.551101259Z [inf]  mkdir -p /app/node_modules/.cache
+2025-11-21T08:22:21.551119999Z [inf]  copy package.json
+2025-11-21T08:22:21.566157455Z [inf]  copy package.json
+2025-11-21T08:22:21.567607977Z [inf]  copy package-lock.json
+2025-11-21T08:22:21.586293106Z [inf]  copy package-lock.json
+2025-11-21T08:22:21.588354383Z [inf]  npm ci
+2025-11-21T08:22:21.849856634Z [inf]  npm warn config production Use `--omit=dev` instead.
+
+2025-11-21T08:22:26.411676966Z [inf]  npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+2025-11-21T08:22:26.437400596Z [inf]  npm warn deprecated @11labs/react@0.2.0: This package is no longer maintained. Please use @elevenlabs/react for the latest version
+
+2025-11-21T08:22:26.665763675Z [inf]  npm warn deprecated @11labs/client@0.2.0: This package is no longer maintained. Please use @elevenlabs/client for the latest version
+
+2025-11-21T08:22:39.847011565Z [inf]  
+added 407 packages, and audited 408 packages in 18s
+
+2025-11-21T08:22:39.848243718Z [inf]  
+found 0 vulnerabilities
+
+2025-11-21T08:22:40.120139212Z [inf]  npm ci
+2025-11-21T08:22:40.122847413Z [inf]  copy / /app
+2025-11-21T08:22:40.420281113Z [inf]  copy / /app
+2025-11-21T08:22:40.422051016Z [inf]  npm run build
+2025-11-21T08:22:40.651571351Z [inf]  npm warn config production Use `--omit=dev` instead.
+
+2025-11-21T08:22:40.667162301Z [inf]  
+> temp_app@0.1.0 build
+> next build
+
+
+2025-11-21T08:22:41.509696978Z [inf]     ▲ Next.js 16.0.3 (Turbopack)
+
+2025-11-21T08:22:41.509967694Z [inf]  
+
+2025-11-21T08:22:41.5366032Z [inf]     Creating an optimized production build ...
+
+2025-11-21T08:22:48.967411Z [inf]   ✓ Compiled successfully in 6.9s
+
+2025-11-21T08:22:48.972508987Z [inf]     Running TypeScript ...
+
+2025-11-21T08:22:53.59733987Z [inf]  Failed to compile.
+
+
+2025-11-21T08:22:53.598246393Z [inf]  ./app/lib/elevenlabs-client.ts:29:13
+Type error: Object literal may only specify known properties, but 'model_id' does not exist in type 'BodyTextToSpeechFull'. Did you mean to write 'modelId'?
+
+[0m [90m 27 |[39m         [36mconst[39m audioStream [33m=[39m [36mawait[39m client[33m.[39mtextToSpeech[33m.[39mconvert([33mVOICE_ID[39m[33m,[39m {
+ [90m 28 |[39m             text[33m:[39m textToSpeak[33m,[39m
+[31m[1m>[22m[39m[90m 29 |[39m             model_id[33m:[39m [32m"eleven_turbo_v2_5"[39m[33m,[39m
+ [90m    |[39m             [31m[1m^[22m[39m
+ [90m 30 |[39m             voice_settings[33m:[39m {
+ [90m 31 |[39m                 stability[33m:[39m params[33m.[39mstability[33m,[39m
+ [90m 32 |[39m                 similarity_boost[33m:[39m params[33m.[39msimilarity_boost[33m,[39m[0m
+
+2025-11-21T08:22:53.720087455Z [inf]  Next.js build worker exited with code: 1 and signal: null
+
+2025-11-21T08:22:54.407819181Z [err]  npm run build
+2025-11-21T08:22:54.434031528Z [err]  ERROR: failed to build: failed to solve: process "npm run build" did not complete successfully: exit code: 1

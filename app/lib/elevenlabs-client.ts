@@ -26,19 +26,26 @@ export async function generateSpeech(text: string, emotionTags: string[]) {
     try {
         const audioStream = await client.textToSpeech.convert(VOICE_ID, {
             text: textToSpeak,
-            model_id: "eleven_turbo_v2_5",
-            voice_settings: {
+            modelId: "eleven_turbo_v2_5",
+            voiceSettings: {
                 stability: params.stability,
-                similarity_boost: params.similarity_boost,
+                similarityBoost: params.similarity_boost,
                 style: params.style,
-                use_speaker_boost: params.use_speaker_boost,
+                useSpeakerBoost: params.use_speaker_boost,
             },
         });
 
         // 4. Convert Stream to Buffer (for current compatibility)
-        const chunks: Buffer[] = [];
-        for await (const chunk of audioStream) {
-            chunks.push(Buffer.from(chunk));
+        // 4. Convert Stream to Buffer (for current compatibility)
+        const reader = audioStream.getReader();
+        const chunks: Uint8Array[] = [];
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (value) {
+                chunks.push(value);
+            }
         }
         return Buffer.concat(chunks);
 
