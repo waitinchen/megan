@@ -123,25 +123,18 @@ export default function Home() {
       {/* Header / Status */}
       <header className="w-full max-w-2xl p-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <motion.div
-              animate={{ scale: isPlaying ? [1, 1.1, 1] : 1 }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="w-12 h-12 rounded-full bg-white/50 backdrop-blur-md flex items-center justify-center text-2xl shadow-sm"
-            >
-              {currentEmoji}
-            </motion.div>
-            {isPlaying && (
-              <motion.div
-                className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-              />
-            )}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-white flex items-center justify-center shadow-sm border border-white/50">
+            <span className="text-xl">💧</span>
           </div>
           <div>
-            <h1 className="font-bold text-gray-800 text-lg">花小軟</h1>
-            {isPlaying ? "正在說話..." : "準備就緒"}
+            <h1 className="font-semibold text-slate-800">Megan</h1>
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs text-slate-500 font-medium">準備就緒</span>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
