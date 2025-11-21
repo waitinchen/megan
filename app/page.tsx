@@ -146,16 +146,30 @@ export default function Home() {
       <header className="w-full max-w-2xl p-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
           {/* Avatar Container */}
-          <div
-            className={`relative transition-all duration-300 ease-in-out cursor-pointer ${isAvatarZoomed
-                ? "fixed left-1/2 -translate-x-1/2 w-80 h-80 z-[9999] shadow-2xl border-4 border-white"
-                : "w-12 h-12 border-2 border-white/50 shadow-sm"
-              } rounded-full overflow-hidden`}
-            style={isAvatarZoomed ? { top: 'calc(50% + 30px)', transform: 'translate(-50%, -50%)' } : {}}
-            onClick={() => setIsAvatarZoomed(!isAvatarZoomed)}
-          >
-            <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
-          </div>
+          {!isAvatarZoomed && (
+            <div
+              className="relative w-12 h-12 border-2 border-white/50 shadow-sm rounded-full overflow-hidden cursor-pointer transition-all duration-300 ease-in-out"
+              onClick={() => setIsAvatarZoomed(true)}
+            >
+              <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
+            </div>
+          )}
+          
+          {/* Zoomed Avatar - Centered */}
+          {isAvatarZoomed && (
+            <>
+              <div
+                className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
+              >
+                <div
+                  className="w-80 h-80 shadow-2xl border-4 border-white rounded-full overflow-hidden cursor-pointer pointer-events-auto transition-all duration-300 ease-in-out"
+                  onClick={() => setIsAvatarZoomed(false)}
+                >
+                  <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Overlay for Zoom */}
           {isAvatarZoomed && (

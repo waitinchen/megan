@@ -1,4 +1,4 @@
-import { ELEVENLABS_TAGS } from './elevenlabs-tags';
+import { ELEVENLABS_TAGS, injectV3TagsIntoText } from './elevenlabs-tags';
 
 interface ElevenLabsParams {
     stability: number;
@@ -6,11 +6,13 @@ interface ElevenLabsParams {
     style: number;
     use_speaker_boost: boolean;
     text_prefix?: string; // For injecting tags or instructions
+    processed_text?: string; // Text with V3 tags injected
 }
 
 /**
  * Maps Lingya's emotion tags to ElevenLabs generation parameters.
  * This is the "Translation Layer" that converts "Soul" to "Voice".
+ * Now also injects V3 tags into the text for expressive voice generation.
  * @param tags Detected emotion tags
  * @param text The actual text content (used to check if tags are already present)
  */
@@ -29,7 +31,7 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
     // Helper to check if a tag is already explicitly in the text
     const hasExplicitTag = (tag: string) => lowerText.includes(`[${tag}]`);
 
-    // Priority-based mapping
+    // Priority-based mapping for voice parameters
 
     if (tags.includes('whisper')) {
         params.stability = 0.3;
@@ -64,6 +66,11 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
         params.stability = 0.3;
         params.style = 1.0;
     }
+
+    // NEW: Inject V3 tags into text for expressive voice generation
+    // The injectV3TagsIntoText function will check if tags already exist
+    // So we can always call it - it will handle duplicates intelligently
+    params.processed_text = injectV3TagsIntoText(text, tags);
 
     return params;
 }

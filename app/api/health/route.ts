@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function GET() {
     const status = {
@@ -20,22 +20,26 @@ export async function GET() {
         status.elevenlabs = 'error';
     }
 
-    // Check Anthropic Claude API
+    // Check Google Gemini API (the actual LLM being used)
     try {
-        const anthropic = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY || '',
-        });
+        const apiKey = process.env.GOOGLE_API_KEY;
+        if (!apiKey) {
+            status.llm = 'error';
+        } else {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ 
+                model: 'gemini-2.0-flash-exp' 
+            });
 
-        // Simple test request
-        const response = await anthropic.messages.create({
-            model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20240620',
-            max_tokens: 10,
-            messages: [{ role: 'user', content: 'Hi' }],
-        });
+            // Simple test request
+            const result = await model.generateContent('Hi');
+            const response = await result.response;
+            const text = response.text();
 
-        status.llm = response.content.length > 0 ? 'ok' : 'error';
+            status.llm = text && text.length > 0 ? 'ok' : 'error';
+        }
     } catch (error: any) {
-        console.error('Claude health check failed:', error.message);
+        console.error('Google Gemini health check failed:', error.message);
         status.llm = 'error';
     }
 
