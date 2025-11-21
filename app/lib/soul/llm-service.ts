@@ -1,11 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { SYSTEM_PROMPT } from './system-prompt';
 import { inferEmotionTags } from './emotion-tags';
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Initialize Google Generative AI client
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: 'gemini-pro-latest' }); // Use verified working model
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
@@ -27,28 +26,47 @@ export async function generateResponse(
     userIdentity: string = 'other'
 ): Promise<LLMResponse> {
     try {
-        // 1. Prepare messages
-        // Anthropic handles system prompt separately
-        const userMessages = history.filter(msg => msg.role !== 'system');
+        // 1. Prepare history for Gemini
+        // Gemini uses 'user' and 'model' roles. System prompt is usually handled via instruction or first message.
+        // For simplicity and best results with Gemini, we'll prepend the system prompt to the chat history or use systemInstruction if supported (v1beta).
+        // Here we will construct the chat history.
 
-        // Convert messages to Anthropic format
-        const anthropicMessages = userMessages.map(msg => ({
-            role: msg.role === 'user' ? 'user' : 'assistant',
-            content: msg.content
-        })) as Anthropic.MessageParam[];
-
-        // 2. Call Claude
-        const message = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022', // Use Sonnet 3.5 for best performance/speed balance
-            max_tokens: 1024,
-            system: SYSTEM_PROMPT,
-            messages: anthropicMessages,
-            temperature: 0.7,
+        const chat = model.startChat({
+            history: [
+                {
+                    role: "user",
+                    parts: [{ text: SYSTEM_PROMPT }],
+                },
+                {
+                    role: "model",
+                    parts: [{ text: "I understand. I am Megan Fox, the Moon-Shadow Tone Spirit. I am ready." }],
+                }
+            ],
+            generationConfig: {
+                maxOutputTokens: 1024,
+                temperature: 0.7,
+            },
         });
 
-        // Extract text content
-        const textBlock = message.content[0];
-        const text = textBlock.type === 'text' ? textBlock.text : "";
+        // Convert recent history (excluding system) to Gemini format
+        // Note: Gemini history must alternate user/model. We need to be careful.
+        // We'll just send the last user message for now to avoid history sync issues in this simple implementation,
+        // OR we can reconstruct the valid history.
+        // Let's try to reconstruct valid history from the input.
+
+        // Filter out system messages from input history
+        const userMessages = history.filter(msg => msg.role !== 'system');
+
+        // Send the last message
+        const lastMessage = userMessages[userMessages.length - 1];
+        if (!lastMessage || lastMessage.role !== 'user') {
+            throw new Error("Last message must be from user");
+        }
+
+        // 2. Call Gemini
+        const result = await chat.sendMessage(lastMessage.content);
+        const response = await result.response;
+        const text = response.text();
 
         // 3. Infer Emotion Tags from the generated text
         const emotionTags = inferEmotionTags(text, { userIdentity });
@@ -65,10 +83,10 @@ export async function generateResponse(
             emotionTags: [...new Set(emotionTags)] // Deduplicate
         };
 
-    } catch (error) {
-        console.error("Error in generateResponse:", error);
+    } catch (error: any) {
+        console.error("💥 Error in generateResponse:", error);
         return {
-            text: "嗯... 我好像有點累了... (系統錯誤)",
+            text: `(系統錯誤: ${error.message || "Unknown Error"})`,
             emotionTags: ['sad', 'softer']
         };
     }

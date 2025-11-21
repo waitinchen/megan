@@ -11,6 +11,7 @@
   "dependencies": {
     "@11labs/react": "^0.2.0",
     "@anthropic-ai/sdk": "^0.70.1",
+    "@google/generative-ai": "^0.24.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.554.0",
