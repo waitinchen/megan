@@ -19,35 +19,36 @@ export function inferEmotionTags(text, context = {}) {
   const { userIdentity } = context;
 
   // 關鍵詞匹配規則（優先級從高到低）
-  // Intimate/Seductive (Moonlight)
-  {
-    keywords: ['love', 'miss you', 'want you', 'come here', '愛', '想你', '過來', '喜歡', '寂寞', 'lonely'],
+  const keywordRules = [
+    // Intimate/Seductive (Moonlight)
+    {
+      keywords: ['love', 'miss you', 'want you', 'come here', '愛', '想你', '過來', '喜歡', '寂寞', 'lonely'],
       tags: ['whisper', 'flirty'],
-        priority: 10,
+      priority: 10,
     },
-  // Mysterious/Deep (Shadow)
-  {
-    keywords: ['truth', 'secret', 'hide', 'dark', 'night', 'moon', '真話', '秘密', '夜晚', '月亮', '藏'],
+    // Mysterious/Deep (Shadow)
+    {
+      keywords: ['truth', 'secret', 'hide', 'dark', 'night', 'moon', '真話', '秘密', '夜晚', '月亮', '藏'],
       tags: ['softer', 'whisper'],
-        priority: 9,
+      priority: 9,
     },
-  // Playful/Dangerous (Feline)
-  {
-    keywords: ['bad', 'dangerous', 'play', 'game', '壞', '危險', '玩', '遊戲'],
+    // Playful/Dangerous (Feline)
+    {
+      keywords: ['bad', 'dangerous', 'play', 'game', '壞', '危險', '玩', '遊戲'],
       tags: ['mischievously', 'flirty'], // Note: mischievously is handled in adapter
-        priority: 8,
+      priority: 8,
     },
-  // Sad/Vulnerable (Rain)
-  {
-    keywords: ['sad', 'cry', 'hurt', 'pain', '難過', '哭', '痛', '傷心'],
+    // Sad/Vulnerable (Rain)
+    {
+      keywords: ['sad', 'cry', 'hurt', 'pain', '難過', '哭', '痛', '傷心'],
       tags: ['softer', 'breathy'],
-        priority: 7,
+      priority: 7,
     },
-  // Laugh/Amused
-  {
-    keywords: ['haha', 'lol', 'funny', 'joke', '哈哈', '好笑', '有趣'],
+    // Laugh/Amused
+    {
+      keywords: ['haha', 'lol', 'funny', 'joke', '哈哈', '好笑', '有趣'],
       tags: ['playful', 'excited'],
-        priority: 6,
+      priority: 6,
     },
   ];
 
