@@ -66,7 +66,13 @@ export async function generateResponse(
         // 2. Call Gemini
         const result = await chat.sendMessage(lastMessage.content);
         const response = await result.response;
-        const text = response.text();
+        let text = response.text();
+
+        // Fallback if text is empty
+        if (!text || text.trim().length === 0) {
+            console.warn("⚠️ Gemini returned empty text. Using fallback.");
+            text = "...";
+        }
 
         // 3. Infer Emotion Tags from the generated text
         const emotionTags = inferEmotionTags(text, { userIdentity });

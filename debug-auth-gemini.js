@@ -16,8 +16,8 @@ async function testConnection() {
     console.log("📡 Testing Google Gemini API Connection...");
 
     const candidates = [
+        "gemini-1.5-flash",
         "gemini-pro-latest",
-        "models/gemini-pro-latest",
         "gemini-2.5-pro",
         "models/gemini-2.5-pro",
         "gemini-1.5-flash" // Keep just in case
