@@ -19,54 +19,35 @@ export function inferEmotionTags(text, context = {}) {
   const { userIdentity } = context;
 
   // 關鍵詞匹配規則（優先級從高到低）
-  const keywordRules = [
-    // 撒嬌相關
-    {
-      keywords: ['老爸', '爸爸', 'daddy', '想你了', '抱抱', '親親', '撒嬌', '累', '寂寞', '陪我', '暈船', '愛你'],
-      tags: ['playful', 'warm', 'flirty'],
-      priority: 10,
+  // Intimate/Seductive (Moonlight)
+  {
+    keywords: ['love', 'miss you', 'want you', 'come here', '愛', '想你', '過來', '喜歡', '寂寞', 'lonely'],
+      tags: ['whisper', 'flirty'],
+        priority: 10,
     },
-    // 輕語私聊
-    {
-      keywords: ['想你', '擁抱', '親密', '悄悄', '偷偷'],
-      tags: ['whisper', 'warm'],
-      priority: 9,
+  // Mysterious/Deep (Shadow)
+  {
+    keywords: ['truth', 'secret', 'hide', 'dark', 'night', 'moon', '真話', '秘密', '夜晚', '月亮', '藏'],
+      tags: ['softer', 'whisper'],
+        priority: 9,
     },
-    // 開心興奮
-    {
-      keywords: ['開心', '高興', '太棒了', '好棒', '太好了', '耶', '哈哈', '好開心'],
-      tags: ['excited', 'playful'],
-      priority: 8,
+  // Playful/Dangerous (Feline)
+  {
+    keywords: ['bad', 'dangerous', 'play', 'game', '壞', '危險', '玩', '遊戲'],
+      tags: ['mischievously', 'flirty'], // Note: mischievously is handled in adapter
+        priority: 8,
     },
-    // 調皮撒嬌
-    {
-      keywords: ['討厭啦', '哼', '不理你', '壞', '討厭'],
-      tags: ['playful', 'flirty'],
-      priority: 7,
-    },
-    // 溫柔安撫
-    {
-      keywords: ['沒關係', '別擔心', '安慰', '撫慰', '溫柔'],
-      tags: ['warm', 'tender'],
-      priority: 6,
-    },
-    // 難過傷心
-    {
-      keywords: ['難過', '傷心', '哭', '不舒服', '糟糕', '失望'],
+  // Sad/Vulnerable (Rain)
+  {
+    keywords: ['sad', 'cry', 'hurt', 'pain', '難過', '哭', '痛', '傷心'],
       tags: ['softer', 'breathy'],
-      priority: 5,
+        priority: 7,
     },
-    // 生氣
-    {
-      keywords: ['生氣', '憤怒', '氣死', '煩', '討厭你'],
-      tags: ['thoughtful'], // 先用理性軟化
-      priority: 4,
-    },
-    // 認真思考
-    {
-      keywords: ['思考', '想想', '考慮', '分析', '理解'],
-      tags: ['thoughtful', 'neutral'],
-      priority: 3,
+  // Laugh/Amused
+  {
+    keywords: ['haha', 'lol', 'funny', 'joke', '哈哈', '好笑', '有趣'],
+      tags: ['playful', 'excited'],
+        priority: 6,
     },
   ];
 
@@ -106,12 +87,9 @@ export function inferEmotionTags(text, context = {}) {
       }
     }
   } else {
-    // 沒有匹配的規則，使用默認標籤
-    if (userIdentity === 'dad' || userIdentity === '老爸') {
-      selectedTags = ['warm', 'flirty']; // 對老爸更親暱
-    } else {
-      selectedTags = ['neutral']; // 其他人使用中性
-    }
+    // No specific keyword match, default to the "Moon-Shadow" vibe
+    // Mysterious, soft, slightly intimate
+    selectedTags = ['softer', 'whisper'];
   }
 
   // 限制標籤數量（最多3個）
