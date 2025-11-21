@@ -1,7 +1,12 @@
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { mapEmotionToElevenLabs } from './soul/elevenlabs-adapter';
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Default voice (Rachel) or user's choice
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+
+const client = new ElevenLabsClient({
+    apiKey: ELEVENLABS_API_KEY,
+});
 
 export async function generateSpeech(text: string, emotionTags: string[]) {
     if (!ELEVENLABS_API_KEY) {
@@ -17,38 +22,28 @@ export async function generateSpeech(text: string, emotionTags: string[]) {
     console.log(`[ElevenLabs] Generating speech for: "${textToSpeak}"`);
     console.log(`[ElevenLabs] Params: Stability=${params.stability}, Style=${params.style}`);
 
-    // 3. Call ElevenLabs API
-    // We use the V3 Turbo (v2.5) model for best performance and emotion support.
-    const modelId = "eleven_turbo_v2_5";
-
-    const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
-        {
-            method: "POST",
-            headers: {
-                "Accept": "audio/mpeg",
-                "Content-Type": "application/json",
-                "xi-api-key": ELEVENLABS_API_KEY,
+    // 3. Call ElevenLabs SDK
+    try {
+        const audioStream = await client.textToSpeech.convert(VOICE_ID, {
+            text: textToSpeak,
+            model_id: "eleven_turbo_v2_5",
+            voice_settings: {
+                stability: params.stability,
+                similarity_boost: params.similarity_boost,
+                style: params.style,
+                use_speaker_boost: params.use_speaker_boost,
             },
-            body: JSON.stringify({
-                text: textToSpeak,
-                model_id: modelId,
-                voice_settings: {
-                    stability: params.stability,
-                    similarity_boost: params.similarity_boost,
-                    style: params.style,
-                    use_speaker_boost: params.use_speaker_boost,
-                },
-            }),
+        });
+
+        // 4. Convert Stream to Buffer (for current compatibility)
+        const chunks: Buffer[] = [];
+        for await (const chunk of audioStream) {
+            chunks.push(Buffer.from(chunk));
         }
-    );
+        return Buffer.concat(chunks);
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`ElevenLabs API Error: ${response.status} - ${errorText}`);
+    } catch (error: any) {
+        console.error("ElevenLabs SDK Error:", error);
+        throw error;
     }
-
-    // 4. Return Audio Buffer
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
 }
