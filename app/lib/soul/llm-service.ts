@@ -1,10 +1,17 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT } from './system-prompt';
 import { inferEmotionTags } from './emotion-tags';
 
-// Initialize Google Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: 'gemini-pro-latest' }); // Use verified working model
+// Initialize Anthropic client
+const apiKey = process.env.ANTHROPIC_API_KEY;
+
+if (!apiKey) {
+    console.error('❌ ANTHROPIC_API_KEY is not set in environment variables');
+}
+
+const anthropic = new Anthropic({
+    apiKey: apiKey || '',
+});
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
@@ -26,51 +33,37 @@ export async function generateResponse(
     userIdentity: string = 'other'
 ): Promise<LLMResponse> {
     try {
-        // 1. Prepare history for Gemini
-        // Gemini uses 'user' and 'model' roles. System prompt is usually handled via instruction or first message.
-        // For simplicity and best results with Gemini, we'll prepend the system prompt to the chat history or use systemInstruction if supported (v1beta).
-        // Here we will construct the chat history.
+        // 1. Prepare history for Claude
+        // Claude uses 'user' and 'assistant' roles. System prompt is passed separately.
+        // Filter out system messages from input history
+        const conversationHistory = history
+            .filter(msg => msg.role !== 'system')
+            .map(msg => ({
+                role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+                content: msg.content
+            }));
 
-        const chat = model.startChat({
-            history: [
-                {
-                    role: "user",
-                    parts: [{ text: SYSTEM_PROMPT }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "I understand. I am Megan Fox, the Moon-Shadow Tone Spirit. I am ready." }],
-                }
-            ],
-            generationConfig: {
-                maxOutputTokens: 1024,
-                temperature: 0.7,
-            },
+        // 2. Call Claude
+        const response = await anthropic.messages.create({
+            model: 'claude-3-5-sonnet-20241022',
+            max_tokens: 1024,
+            temperature: 0.7,
+            system: SYSTEM_PROMPT,
+            messages: conversationHistory,
         });
 
-        // Convert recent history (excluding system) to Gemini format
-        // Note: Gemini history must alternate user/model. We need to be careful.
-        // We'll just send the last user message for now to avoid history sync issues in this simple implementation,
-        // OR we can reconstruct the valid history.
-        // Let's try to reconstruct valid history from the input.
-
-        // Filter out system messages from input history
-        const userMessages = history.filter(msg => msg.role !== 'system');
-
-        // Send the last message
-        const lastMessage = userMessages[userMessages.length - 1];
-        if (!lastMessage || lastMessage.role !== 'user') {
-            throw new Error("Last message must be from user");
+        // Extract text from response
+        let text = '';
+        if (response.content && response.content.length > 0) {
+            const textBlock = response.content.find(block => block.type === 'text');
+            if (textBlock && textBlock.type === 'text') {
+                text = textBlock.text;
+            }
         }
-
-        // 2. Call Gemini
-        const result = await chat.sendMessage(lastMessage.content);
-        const response = await result.response;
-        let text = response.text();
 
         // Fallback if text is empty
         if (!text || text.trim().length === 0) {
-            console.warn("⚠️ Gemini returned empty text. Using fallback.");
+            console.warn("⚠️ Claude returned empty text. Using fallback.");
             text = "...";
         }
 

@@ -45,6 +45,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentEmotion, setCurrentEmotion] = useState<string>("neutral");
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isAvatarZoomed, setIsAvatarZoomed] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    setIsConnected(true);
+  }, []);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -118,22 +124,37 @@ export default function Home() {
   const currentEmoji = emotionEmojis[currentEmotion] || "🌸";
 
   return (
-    <div className={`flex min-h-screen flex-col items-center justify-between bg-gradient-to-br ${bgGradient} transition-colors duration-1000 ease-in-out`}>
+    <main className="flex min-h-screen flex-col items-center bg-[#F3F0F5]">
 
       {/* Header / Status */}
       <header className="w-full max-w-2xl p-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/50 shadow-sm">
+          {/* Avatar Container */}
+          <div
+            className={`relative transition-all duration-300 ease-in-out cursor-pointer ${isAvatarZoomed
+              ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 z-50 shadow-2xl border-4 border-white"
+              : "w-12 h-12 border-2 border-white/50 shadow-sm"
+              } rounded-full overflow-hidden`}
+            onClick={() => setIsAvatarZoomed(!isAvatarZoomed)}
+          >
             <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
           </div>
+
+          {/* Overlay for Zoom */}
+          {isAvatarZoomed && (
+            <div
+              className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+              onClick={() => setIsAvatarZoomed(false)}
+            />
+          )}
+
           <div>
             <h1 className="font-semibold text-slate-800">Megan</h1>
             <div className="flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
+              <span className="text-xs text-slate-500 font-medium">
+                {isConnected ? "在線上" : "連線中..."}
               </span>
-              <span className="text-xs text-slate-500 font-medium">準備就緒</span>
             </div>
           </div>
         </div>
@@ -208,6 +229,6 @@ export default function Home() {
           <p className="text-[10px] text-white/20">Powered by EL V3 & Lingya Soul</p>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }

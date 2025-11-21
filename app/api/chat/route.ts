@@ -17,12 +17,16 @@ export async function POST(request: Request) {
         // 2. Generate Speech using ElevenLabs (The "Voice")
         // We pass the emotion tags to adapt the voice parameters
         let audioBase64 = null;
-        try {
-            const audioBuffer = await generateSpeech(text, emotionTags);
-            audioBase64 = audioBuffer.toString('base64');
-        } catch (speechError) {
-            console.error("Speech generation failed:", speechError);
-            // We continue even if speech fails, returning just text
+
+        // Only generate speech if there is valid text and it's not just "..."
+        if (text && text.trim() !== "..." && text.trim().length > 0) {
+            try {
+                const audioBuffer = await generateSpeech(text, emotionTags);
+                audioBase64 = audioBuffer.toString('base64');
+            } catch (speechError) {
+                console.error("Speech generation failed:", speechError);
+                // We continue even if speech fails, returning just text
+            }
         }
 
         // 3. Return everything to the client
