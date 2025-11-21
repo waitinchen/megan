@@ -1,16 +1,12 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { SYSTEM_PROMPT } from './system-prompt';
 import { inferEmotionTags } from './emotion-tags';
 
-// Initialize Anthropic client
-const apiKey = process.env.ANTHROPIC_API_KEY;
-
-if (!apiKey) {
-    console.error('❌ ANTHROPIC_API_KEY is not set in environment variables');
-}
-
-const anthropic = new Anthropic({
-    apiKey: apiKey || '',
+// Initialize Google Generative AI client
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash-exp',
+    systemInstruction: SYSTEM_PROMPT,
 });
 
 export interface ChatMessage {
@@ -33,37 +29,43 @@ export async function generateResponse(
     userIdentity: string = 'other'
 ): Promise<LLMResponse> {
     try {
-        // 1. Prepare history for Claude
-        // Claude uses 'user' and 'assistant' roles. System prompt is passed separately.
+        // 1. Prepare history for Gemini
         // Filter out system messages from input history
-        const conversationHistory = history
-            .filter(msg => msg.role !== 'system')
-            .map(msg => ({
-                role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
-                content: msg.content
-            }));
+        const userMessages = history.filter(msg => msg.role !== 'system');
 
-        // 2. Call Claude
-        const response = await anthropic.messages.create({
-            model: process.env.CLAUDE_MODEL || 'claude-3-haiku-20240307',
-            max_tokens: 1024,
-            temperature: 0.7,
-            system: SYSTEM_PROMPT,
-            messages: conversationHistory,
+        // Convert to Gemini format
+        const geminiHistory = [];
+        for (let i = 0; i < userMessages.length - 1; i++) {
+            const msg = userMessages[i];
+            geminiHistory.push({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.content }],
+            });
+        }
+
+        // Start chat with history
+        const chat = model.startChat({
+            history: geminiHistory,
+            generationConfig: {
+                maxOutputTokens: 1024,
+                temperature: 0.7,
+            },
         });
 
-        // Extract text from response
-        let text = '';
-        if (response.content && response.content.length > 0) {
-            const textBlock = response.content.find(block => block.type === 'text');
-            if (textBlock && textBlock.type === 'text') {
-                text = textBlock.text;
-            }
+        // Send the last message
+        const lastMessage = userMessages[userMessages.length - 1];
+        if (!lastMessage || lastMessage.role !== 'user') {
+            throw new Error("Last message must be from user");
         }
+
+        // 2. Call Gemini
+        const result = await chat.sendMessage(lastMessage.content);
+        const response = await result.response;
+        let text = response.text();
 
         // Fallback if text is empty
         if (!text || text.trim().length === 0) {
-            console.warn("⚠️ Claude returned empty text. Using fallback.");
+            console.warn("⚠️ Gemini returned empty text. Using fallback.");
             text = "...";
         }
 
