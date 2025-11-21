@@ -132,10 +132,11 @@ export default function Home() {
           {/* Avatar Container */}
           <div
             className={`relative transition-all duration-300 ease-in-out cursor-pointer ${isAvatarZoomed
-              ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 z-50 shadow-2xl border-4 border-white"
-              : "w-12 h-12 border-2 border-white/50 shadow-sm"
+                ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 z-[9999] shadow-2xl border-4 border-white"
+                : "w-12 h-12 border-2 border-white/50 shadow-sm"
               } rounded-full overflow-hidden`}
             onClick={() => setIsAvatarZoomed(!isAvatarZoomed)}
+            style={isAvatarZoomed ? { marginTop: 'env(safe-area-inset-top)' } : {}}
           >
             <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
           </div>
@@ -143,7 +144,7 @@ export default function Home() {
           {/* Overlay for Zoom */}
           {isAvatarZoomed && (
             <div
-              className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 z-[9998] backdrop-blur-sm"
               onClick={() => setIsAvatarZoomed(false)}
             />
           )}
