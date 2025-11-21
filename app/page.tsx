@@ -152,7 +152,6 @@ export default function Home() {
               : "w-12 h-12 border-2 border-white/50 shadow-sm"
               } rounded-full overflow-hidden`}
             onClick={() => setIsAvatarZoomed(!isAvatarZoomed)}
-            style={isAvatarZoomed ? { marginTop: 'env(safe-area-inset-top)' } : {}}
           >
             <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
           </div>
