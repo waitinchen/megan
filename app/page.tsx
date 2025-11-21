@@ -47,9 +47,25 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAvatarZoomed, setIsAvatarZoomed] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
 
   useEffect(() => {
     setIsConnected(true);
+  }, []);
+
+  // Check API health status
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const response = await fetch('/api/health');
+        const data = await response.json();
+        setApiStatus(data);
+      } catch (error) {
+        console.error('Health check failed:', error);
+        setApiStatus({ elevenlabs: 'error', llm: 'error' });
+      }
+    };
+    checkHealth();
   }, []);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -132,8 +148,8 @@ export default function Home() {
           {/* Avatar Container */}
           <div
             className={`relative transition-all duration-300 ease-in-out cursor-pointer ${isAvatarZoomed
-                ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 z-[9999] shadow-2xl border-4 border-white"
-                : "w-12 h-12 border-2 border-white/50 shadow-sm"
+              ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 z-[9999] shadow-2xl border-4 border-white"
+              : "w-12 h-12 border-2 border-white/50 shadow-sm"
               } rounded-full overflow-hidden`}
             onClick={() => setIsAvatarZoomed(!isAvatarZoomed)}
             style={isAvatarZoomed ? { marginTop: 'env(safe-area-inset-top)' } : {}}
@@ -159,7 +175,28 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {/* API Status Indicator */}
+          <div className="flex gap-2 text-xs font-mono">
+            <div className="flex items-center gap-1">
+              <span className="text-slate-600">EL:</span>
+              <span className={`px-1.5 py-0.5 rounded ${apiStatus.elevenlabs === 'ok' ? 'bg-emerald-100 text-emerald-700' :
+                apiStatus.elevenlabs === 'checking' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                {apiStatus.elevenlabs === 'ok' ? 'OK' : apiStatus.elevenlabs === 'checking' ? '...' : 'ERR'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-slate-600">LLM:</span>
+              <span className={`px-1.5 py-0.5 rounded ${apiStatus.llm === 'ok' ? 'bg-emerald-100 text-emerald-700' :
+                apiStatus.llm === 'checking' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                {apiStatus.llm === 'ok' ? 'OK' : apiStatus.llm === 'checking' ? '...' : 'ERR'}
+              </span>
+            </div>
+          </div>
           {/* Debug Tags */}
           <div className="hidden sm:flex gap-1">
             {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].emotion?.map(tag => (
