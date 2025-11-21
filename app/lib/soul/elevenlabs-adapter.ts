@@ -34,26 +34,16 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
     if (tags.includes('whisper')) {
         params.stability = 0.3;
         params.style = 0.7; // Increased style for clearer but breathy whisper
-        if (!hasExplicitTag('whispers') && !hasExplicitTag('whisper')) {
-            params.text_prefix += "[whispers] ";
-        }
     }
 
     if (tags.includes('flirty') || tags.includes('playful')) {
         params.stability = 0.35; // Lower stability = more emotion variation
         params.style = 0.85;     // High style = more breathy/expressive
-        // Inject a soft/playful tone marker if not already whispering
-        if (!tags.includes('whisper') && !hasExplicitTag('mischievously')) {
-            params.text_prefix += "[mischievously] ";
-        }
     }
 
     if (tags.includes('excited')) {
         params.stability = 0.35;
         params.style = 0.8;
-        if (!hasExplicitTag('excited')) {
-            params.text_prefix += "[excited] ";
-        }
     }
 
     if (tags.includes('angry')) {
@@ -64,24 +54,15 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
     if (tags.includes('sad') || tags.includes('tender') || tags.includes('softer')) {
         params.stability = 0.6;
         params.style = 0.2;
-        if (!hasExplicitTag('sighs') && !hasExplicitTag('sigh')) {
-            params.text_prefix += "[sighs] ";
-        }
     }
 
     if (tags.includes('breathy')) {
         params.stability = 0.4;
-        if (!hasExplicitTag('exhales') && !hasExplicitTag('breathy')) {
-            params.text_prefix += "[exhales] ";
-        }
     }
 
     if (tags.includes('sings')) {
         params.stability = 0.3;
         params.style = 1.0;
-        if (!hasExplicitTag('sings')) {
-            params.text_prefix += "[sings] ";
-        }
     }
 
     return params;
