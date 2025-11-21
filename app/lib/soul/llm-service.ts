@@ -45,7 +45,7 @@ export async function generateResponse(
 
         // 2. Call Claude
         const response = await anthropic.messages.create({
-            model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20240620',
+            model: process.env.CLAUDE_MODEL || 'claude-3-haiku-20240307',
             max_tokens: 1024,
             temperature: 0.7,
             system: SYSTEM_PROMPT,
