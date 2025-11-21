@@ -17,18 +17,27 @@ export async function generateSpeech(text: string, emotionTags: string[]) {
     const params = mapEmotionToElevenLabs(emotionTags, text);
 
     // 2. Prepare the text - use processed_text if V3 tags were injected, otherwise use original
-    const textToSpeak = params.processed_text || ((params.text_prefix || "") + text);
+    let textToSpeak = params.processed_text || ((params.text_prefix || "") + text);
+    
+    // 3. Add tone example sentence for V3 model (小软's requirement: prompt > 200 chars)
+    // This helps the model understand the desired tone before the main text
+    const toneExample = `[breathy][slow] Hey… it's me, Megan. Let's breathe together. `;
+    
+    // Only add example if text is short (to ensure total > 200 chars for V3)
+    if (textToSpeak.length < 200) {
+        textToSpeak = toneExample + textToSpeak;
+    }
 
     console.log(`[ElevenLabs] Generating speech for: "${textToSpeak}"`);
     console.log(`[ElevenLabs] Params: Stability=${params.stability}, Style=${params.style}`);
     console.log(`[ElevenLabs] Emotion Tags: ${emotionTags.join(', ')}`);
-    console.log(`[ElevenLabs] V3 Tags injected: ${textToSpeak !== text ? 'YES' : 'NO'}`);
+    console.log(`[ElevenLabs] V3 Tags injected: ${textToSpeak.includes('[whispers]') || textToSpeak.includes('[sighs]') || textToSpeak.includes('[breathy]') ? 'YES' : 'NO'}`);
 
     // 3. Call ElevenLabs SDK
     try {
-        // Use V3 model that supports audio tags (eleven_multilingual_v2 or newer)
-        // Fallback to turbo if V3 not available
-        const modelId = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2";
+        // Use V3 model that supports audio tags
+        // Try eleven_turbo_v2_5 first (confirmed to support V3 tags), then fallback
+        const modelId = process.env.ELEVENLABS_MODEL_ID || "eleven_turbo_v2_5";
         
         const audioStream = await client.textToSpeech.convert(VOICE_ID, {
             text: textToSpeak,

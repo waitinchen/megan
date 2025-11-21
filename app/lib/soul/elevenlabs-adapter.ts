@@ -17,11 +17,12 @@ interface ElevenLabsParams {
  * @param text The actual text content (used to check if tags are already present)
  */
 export function mapEmotionToElevenLabs(tags: string[], text: string = ""): ElevenLabsParams {
-    // Default parameters (Balanced)
+    // Default parameters - More expressive for "Moon-Shadow" persona
+    // Lower stability = more variation, Higher style = more expressive
     let params: ElevenLabsParams = {
-        stability: 0.5,
+        stability: 0.35,  // Lower for more emotion (was 0.5)
         similarity_boost: 0.75,
-        style: 0.0,
+        style: 0.6,       // Higher for more expressiveness (was 0.0)
         use_speaker_boost: true,
         text_prefix: "",
     };
@@ -32,45 +33,51 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
     const hasExplicitTag = (tag: string) => lowerText.includes(`[${tag}]`);
 
     // Priority-based mapping for voice parameters
+    // More aggressive settings for expressive voice
 
     if (tags.includes('whisper')) {
-        params.stability = 0.3;
-        params.style = 0.7; // Increased style for clearer but breathy whisper
+        params.stability = 0.25;  // Very low for whisper variation
+        params.style = 0.8;       // High style for breathy whisper
     }
 
     if (tags.includes('flirty') || tags.includes('playful')) {
-        params.stability = 0.35; // Lower stability = more emotion variation
-        params.style = 0.85;     // High style = more breathy/expressive
+        params.stability = 0.3;   // Lower stability = more emotion variation
+        params.style = 0.9;       // Very high style = more breathy/expressive
     }
 
     if (tags.includes('excited')) {
-        params.stability = 0.35;
-        params.style = 0.8;
+        params.stability = 0.3;
+        params.style = 0.85;
     }
 
     if (tags.includes('angry')) {
-        params.stability = 0.3;
-        params.style = 0.9;
+        params.stability = 0.25;
+        params.style = 0.95;
     }
 
     if (tags.includes('sad') || tags.includes('tender') || tags.includes('softer')) {
-        params.stability = 0.6;
-        params.style = 0.2;
+        params.stability = 0.5;   // Slightly higher for sad (but still expressive)
+        params.style = 0.4;       // Moderate style for tender emotions
     }
 
     if (tags.includes('breathy')) {
-        params.stability = 0.4;
+        params.stability = 0.35;
+        params.style = 0.7;
     }
 
     if (tags.includes('sings')) {
-        params.stability = 0.3;
+        params.stability = 0.25;
         params.style = 1.0;
     }
 
     // NEW: Inject V3 tags into text for expressive voice generation
-    // The injectV3TagsIntoText function will check if tags already exist
-    // So we can always call it - it will handle duplicates intelligently
-    params.processed_text = injectV3TagsIntoText(text, tags);
+    // ALWAYS inject V3 tags - even if no emotion tags detected, use default "whisper" for Moon-Shadow persona
+    if (tags.length === 0 || (tags.length === 1 && tags[0] === 'neutral')) {
+        // Default to whisper for Moon-Shadow persona if no emotion detected
+        params.processed_text = injectV3TagsIntoText(text, ['whisper', 'softer']);
+    } else {
+        params.processed_text = injectV3TagsIntoText(text, tags);
+    }
 
     return params;
 }

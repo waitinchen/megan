@@ -23,8 +23,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid messages format' }, { status: 400 });
         }
 
-        // 1. Get Text and Emotion from LLM (The "Soul")
-        const { text, emotionTags } = await generateResponse(messages, userIdentity);
+        // 1. Check if this is the first message (for "立灵句" initialization)
+        const isFirstMessage = messages.length === 1 && messages[0].role === 'user';
+        
+        // 2. Get Text and Emotion from LLM (The "Soul")
+        const { text, emotionTags } = await generateResponse(messages, userIdentity, isFirstMessage);
 
         // 2. Generate Speech using ElevenLabs (The "Voice")
         // We pass the emotion tags to adapt the voice parameters

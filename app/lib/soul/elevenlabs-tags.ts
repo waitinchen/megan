@@ -93,11 +93,6 @@ export function mapEmotionTagsToV3Tags(emotionTags: string[]): string[] {
 export function injectV3TagsIntoText(text: string, emotionTags: string[]): string {
     const v3Tags = mapEmotionTagsToV3Tags(emotionTags);
     
-    // If no V3 tags to inject, return original text
-    if (v3Tags.length === 0) {
-        return text;
-    }
-    
     // Check if text already contains V3 tags (check for common patterns)
     const v3TagPattern = /\[(whispers?|sighs?|excited|mischievously|sings?|sarcastic|exhales?|laughs?|crying|curious)\]/i;
     const hasV3Tags = v3TagPattern.test(text);
@@ -108,18 +103,25 @@ export function injectV3TagsIntoText(text: string, emotionTags: string[]): strin
         return text;
     }
     
+    // If no V3 tags to inject, use default "whispers" for Moon-Shadow persona
+    if (v3Tags.length === 0) {
+        const defaultInjected = `[whispers] ${text}`;
+        console.log(`[V3 Tags] No emotion tags detected, using default [whispers]: "${defaultInjected}"`);
+        return defaultInjected;
+    }
+    
     // Priority-based injection (whisper and sigh are most important for "Moon-Shadow" persona)
     // For whisper (intimate, secretive) - highest priority
     if (v3Tags.includes('[whispers]')) {
         const injected = `[whispers] ${text}`;
-        console.log(`[V3 Tags] Injected [whispers]: "${injected}"`);
+        console.log(`[V3 Tags] ✅ Injected [whispers]: "${injected}"`);
         return injected;
     }
     
     // For sigh (sad, tender, vulnerable) - second priority
     if (v3Tags.includes('[sighs]')) {
         const injected = `[sighs] ${text}`;
-        console.log(`[V3 Tags] Injected [sighs]: "${injected}"`);
+        console.log(`[V3 Tags] ✅ Injected [sighs]: "${injected}"`);
         return injected;
     }
     
@@ -127,6 +129,6 @@ export function injectV3TagsIntoText(text: string, emotionTags: string[]): strin
     // Use the first (highest priority) tag
     const primaryTag = v3Tags[0];
     const injected = `${primaryTag} ${text}`;
-    console.log(`[V3 Tags] Injected ${primaryTag}: "${injected}"`);
+    console.log(`[V3 Tags] ✅ Injected ${primaryTag}: "${injected}"`);
     return injected;
 }
