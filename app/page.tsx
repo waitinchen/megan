@@ -148,9 +148,10 @@ export default function Home() {
           {/* Avatar Container */}
           <div
             className={`relative transition-all duration-300 ease-in-out cursor-pointer ${isAvatarZoomed
-              ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 z-[9999] shadow-2xl border-4 border-white"
-              : "w-12 h-12 border-2 border-white/50 shadow-sm"
+                ? "fixed left-1/2 -translate-x-1/2 w-80 h-80 z-[9999] shadow-2xl border-4 border-white"
+                : "w-12 h-12 border-2 border-white/50 shadow-sm"
               } rounded-full overflow-hidden`}
+            style={isAvatarZoomed ? { top: 'calc(50% + 30px)', transform: 'translate(-50%, -50%)' } : {}}
             onClick={() => setIsAvatarZoomed(!isAvatarZoomed)}
           >
             <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
