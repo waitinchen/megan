@@ -141,9 +141,7 @@ export default function Home() {
           </div>
           <div>
             <h1 className="font-bold text-gray-800 text-lg">花小軟</h1>
-            <p className="text-xs text-gray-500 font-medium">
-              {isPlaying ? "正在說話..." : "聆聽中..."}
-            </p>
+            {isPlaying ? "正在說話..." : "準備就緒"}
           </div>
         </div>
         <div className="flex gap-2">
@@ -214,10 +212,9 @@ export default function Home() {
           </button>
         </div>
         <div className="text-center mt-2">
-          <p className="text-[10px] text-gray-400">Powered by ElevenLabs V3 & Lingya Soul</p>
+          <p className="text-[10px] text-white/20">Powered by EL V3 & Lingya Soul</p>
         </div>
       </footer>
     </div>
   );
 }
-
