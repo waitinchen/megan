@@ -26,19 +26,16 @@ export function mapEmotionToElevenLabs(tags: string[]): ElevenLabsParams {
     // For simplicity, we check for presence of high-impact tags
 
     if (tags.includes('whisper')) {
-        params.stability = 0.3; // Lower stability for more expressiveness
-        params.style = 0.5;
+        params.stability = 0.3;
+        params.style = 0.7; // Increased style for clearer but breathy whisper
         params.text_prefix += "[whispers] ";
     }
 
     if (tags.includes('flirty') || tags.includes('playful')) {
-        params.stability = 0.4;
-        params.style = 0.6;
-        // Inject a soft/playful tone marker if not already whispering
+        params.stability = 0.35; // Lower stability = more emotion variation
+        params.style = 0.85;     // High style = more breathy/expressive
+        // Inject a soft/playful tone marker
         if (!tags.includes('whisper')) {
-            // ElevenLabs V3 often picks up on context, but we can nudge it
-            // We don't have a specific [flirty] tag in the standard list, 
-            // but we can use [whispers] or [mischievously]
             params.text_prefix += "[mischievously] ";
         }
     }

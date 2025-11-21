@@ -22,8 +22,8 @@ export function inferEmotionTags(text, context = {}) {
   const keywordRules = [
     // 撒嬌相關
     {
-      keywords: ['老爸', '爸爸', 'daddy', '想你了', '抱抱', '親親', '撒嬌'],
-      tags: ['playful', 'warm'],
+      keywords: ['老爸', '爸爸', 'daddy', '想你了', '抱抱', '親親', '撒嬌', '累', '寂寞', '陪我', '暈船', '愛你'],
+      tags: ['playful', 'warm', 'flirty'],
       priority: 10,
     },
     // 輕語私聊
@@ -73,7 +73,7 @@ export function inferEmotionTags(text, context = {}) {
   // 收集所有匹配的規則
   const matchedRules = [];
   for (const rule of keywordRules) {
-    const matchCount = rule.keywords.filter(keyword => 
+    const matchCount = rule.keywords.filter(keyword =>
       lowerText.includes(keyword.toLowerCase())
     ).length;
 
