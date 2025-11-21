@@ -189,16 +189,16 @@ export default function Home() {
           </button>
           <input
             type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="和花小軟說說話..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder="請按此輸入文字..."
             className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 px-2"
             disabled={isLoading}
           />
           <button
-            onClick={handleSend}
-            disabled={isLoading || !input.trim()}
+            onClick={handleSendMessage}
+            disabled={isLoading || !inputText.trim()}
             className="p-3 rounded-full bg-rose-400 hover:bg-rose-500 text-white shadow-md transition-all disabled:opacity-50 disabled:hover:bg-rose-400"
           >
             <Send size={18} />
