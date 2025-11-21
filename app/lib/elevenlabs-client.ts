@@ -14,7 +14,7 @@ export async function generateSpeech(text: string, emotionTags: string[]) {
     }
 
     // 1. Map Emotion Tags to ElevenLabs Parameters
-    const params = mapEmotionToElevenLabs(emotionTags);
+    const params = mapEmotionToElevenLabs(emotionTags, text);
 
     // 2. Prepare the text (inject prefix if any)
     const textToSpeak = (params.text_prefix || "") + text;

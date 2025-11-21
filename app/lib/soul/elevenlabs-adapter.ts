@@ -11,8 +11,10 @@ interface ElevenLabsParams {
 /**
  * Maps Lingya's emotion tags to ElevenLabs generation parameters.
  * This is the "Translation Layer" that converts "Soul" to "Voice".
+ * @param tags Detected emotion tags
+ * @param text The actual text content (used to check if tags are already present)
  */
-export function mapEmotionToElevenLabs(tags: string[]): ElevenLabsParams {
+export function mapEmotionToElevenLabs(tags: string[], text: string = ""): ElevenLabsParams {
     // Default parameters (Balanced)
     let params: ElevenLabsParams = {
         stability: 0.5,
@@ -22,55 +24,64 @@ export function mapEmotionToElevenLabs(tags: string[]): ElevenLabsParams {
         text_prefix: "",
     };
 
-    // Priority-based mapping (Last match wins or we can blend)
-    // For simplicity, we check for presence of high-impact tags
+    const lowerText = text.toLowerCase();
+
+    // Helper to check if a tag is already explicitly in the text
+    const hasExplicitTag = (tag: string) => lowerText.includes(`[${tag}]`);
+
+    // Priority-based mapping
 
     if (tags.includes('whisper')) {
         params.stability = 0.3;
         params.style = 0.7; // Increased style for clearer but breathy whisper
-        params.text_prefix += "[whispers] ";
+        if (!hasExplicitTag('whispers') && !hasExplicitTag('whisper')) {
+            params.text_prefix += "[whispers] ";
+        }
     }
 
     if (tags.includes('flirty') || tags.includes('playful')) {
         params.stability = 0.35; // Lower stability = more emotion variation
         params.style = 0.85;     // High style = more breathy/expressive
-        // Inject a soft/playful tone marker
-        if (!tags.includes('whisper')) {
+        // Inject a soft/playful tone marker if not already whispering
+        if (!tags.includes('whisper') && !hasExplicitTag('mischievously')) {
             params.text_prefix += "[mischievously] ";
         }
     }
 
     if (tags.includes('excited')) {
-        params.stability = 0.35; // High emotion needs lower stability
-        params.style = 0.8; // High style exaggeration
-        params.text_prefix += "[excited] ";
+        params.stability = 0.35;
+        params.style = 0.8;
+        if (!hasExplicitTag('excited')) {
+            params.text_prefix += "[excited] ";
+        }
     }
 
     if (tags.includes('angry')) {
         params.stability = 0.3;
         params.style = 0.9;
-        // No specific tag for angry in the standard list, but context helps
     }
 
     if (tags.includes('sad') || tags.includes('tender') || tags.includes('softer')) {
-        params.stability = 0.6; // More stable for sad/slow
+        params.stability = 0.6;
         params.style = 0.2;
-        params.text_prefix += "[sighs] ";
+        if (!hasExplicitTag('sighs') && !hasExplicitTag('sigh')) {
+            params.text_prefix += "[sighs] ";
+        }
     }
 
     if (tags.includes('breathy')) {
         params.stability = 0.4;
-        params.text_prefix += "[exhales] ";
+        if (!hasExplicitTag('exhales') && !hasExplicitTag('breathy')) {
+            params.text_prefix += "[exhales] ";
+        }
     }
 
-    // User requested singing support
-    // If the LLM outputs a "singing" intent (which we might need to detect separately or add to tags),
-    // we would add [sings]. 
-    // For now, if 'sings' is in tags:
     if (tags.includes('sings')) {
         params.stability = 0.3;
-        params.style = 1.0; // Max style for singing
-        params.text_prefix += "[sings] ";
+        params.style = 1.0;
+        if (!hasExplicitTag('sings')) {
+            params.text_prefix += "[sings] ";
+        }
     }
 
     return params;
