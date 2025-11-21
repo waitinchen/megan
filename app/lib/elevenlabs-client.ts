@@ -1,4 +1,4 @@
-import { mapEmotionToElevenLabs } from './elevenlabs-adapter';
+import { mapEmotionToElevenLabs } from './soul/elevenlabs-adapter';
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Default voice (Rachel) or user's choice
