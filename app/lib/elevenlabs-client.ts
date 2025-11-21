@@ -18,10 +18,8 @@ export async function generateSpeech(text: string, emotionTags: string[]) {
     console.log(`[ElevenLabs] Params: Stability=${params.stability}, Style=${params.style}`);
 
     // 3. Call ElevenLabs API
-    // We use the V3 Turbo or Multilingual V2 model depending on needs. 
-    // V3 is best for English, Multilingual v2 for Chinese.
-    // Assuming Chinese support is needed given the prompt is in Chinese.
-    const modelId = "eleven_multilingual_v2";
+    // We use the V3 Turbo (v2.5) model for best performance and emotion support.
+    const modelId = "eleven_turbo_v2_5";
 
     const response = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
