@@ -4,11 +4,14 @@ import { generateSpeech } from '@/app/lib/elevenlabs-client';
 
 /**
  * Removes ElevenLabs V3 audio tags from text for display purposes
- * Tags like *whispers*, *laughs*, etc. should only be used for TTS, not shown to users
+ * Tags like *whispers*, *laughs*, [pause], [whisper] etc. should only be used for TTS, not shown to users
  */
 function stripAudioTags(text: string): string {
-    // Remove V3 audio tags: *action description*
-    return text.replace(/\*[^*]+\*/g, '').trim();
+    // Remove V3 audio tags: *action description* and [tag]
+    return text
+        .replace(/\*[^*]+\*/g, '') // Remove *...*
+        .replace(/\[[^\]]+\]/g, '') // Remove [...]
+        .trim();
 }
 
 export async function POST(request: Request) {
