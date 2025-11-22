@@ -17,12 +17,13 @@ interface ElevenLabsParams {
  * @param text The actual text content (used to check if tags are already present)
  */
 export function mapEmotionToElevenLabs(tags: string[], text: string = ""): ElevenLabsParams {
-    // Default parameters - More expressive for "Moon-Shadow" persona
+    // Default parameters - Optimized for emotionally-aware models (multilingual_v2, v3)
+    // For these models, we can be more aggressive with expressiveness
     // Lower stability = more variation, Higher style = more expressive
     let params: ElevenLabsParams = {
-        stability: 0.35,  // Lower for more emotion (was 0.5)
-        similarity_boost: 0.75,
-        style: 0.6,       // Higher for more expressiveness (was 0.0)
+        stability: 0.3,   // Lower for more emotion variation (multilingual_v2 handles this well)
+        similarity_boost: 0.8,  // Slightly higher to maintain voice character
+        style: 0.7,       // Higher for more expressiveness (emotionally-aware models excel here)
         use_speaker_boost: true,
         text_prefix: "",
     };
@@ -35,39 +36,46 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
     // Priority-based mapping for voice parameters
     // More aggressive settings for expressive voice
 
+    // Emotion-specific parameters optimized for emotionally-aware models
     if (tags.includes('whisper')) {
-        params.stability = 0.25;  // Very low for whisper variation
-        params.style = 0.8;       // High style for breathy whisper
+        params.stability = 0.2;   // Very low for natural whisper variation
+        params.style = 0.85;      // High style for breathy, intimate whisper
     }
 
     if (tags.includes('flirty') || tags.includes('playful')) {
-        params.stability = 0.3;   // Lower stability = more emotion variation
-        params.style = 0.9;       // Very high style = more breathy/expressive
+        params.stability = 0.25;  // Low stability = more emotion variation
+        params.style = 0.95;      // Very high style = more breathy/expressive
     }
 
     if (tags.includes('excited')) {
-        params.stability = 0.3;
-        params.style = 0.85;
+        params.stability = 0.25;
+        params.style = 0.9;
     }
 
     if (tags.includes('angry')) {
-        params.stability = 0.25;
-        params.style = 0.95;
+        params.stability = 0.2;
+        params.style = 1.0;       // Maximum style for intense emotion
     }
 
     if (tags.includes('sad') || tags.includes('tender') || tags.includes('softer')) {
-        params.stability = 0.5;   // Slightly higher for sad (but still expressive)
-        params.style = 0.4;       // Moderate style for tender emotions
+        params.stability = 0.4;   // Moderate stability for controlled sadness
+        params.style = 0.5;       // Moderate style for tender, gentle emotions
     }
 
     if (tags.includes('breathy')) {
-        params.stability = 0.35;
-        params.style = 0.7;
+        params.stability = 0.3;
+        params.style = 0.8;       // High style for breathy quality
     }
 
     if (tags.includes('sings')) {
-        params.stability = 0.25;
-        params.style = 1.0;
+        params.stability = 0.2;
+        params.style = 1.0;       // Maximum style for singing
+    }
+    
+    // For calm/thoughtful emotions (from 小软's tag system)
+    if (tags.includes('calm') || tags.includes('thoughtful')) {
+        params.stability = 0.45;
+        params.style = 0.4;       // Lower style for calm, thoughtful delivery
     }
 
     // NEW: Inject V3 tags into text for expressive voice generation
