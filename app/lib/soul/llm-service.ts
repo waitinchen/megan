@@ -107,7 +107,7 @@ export async function generateResponse(
     } catch (error: any) {
         console.error("💥 Error in generateResponse:", error);
         return {
-            text: `(系統錯誤: ${error.message || "Unknown Error"})`,
+            text: `（系統錯誤：${error.message || "未知錯誤"}）`,
             emotionTags: ['sad', 'softer']
         };
     }

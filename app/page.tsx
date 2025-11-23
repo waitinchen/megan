@@ -114,26 +114,72 @@ export default function Home() {
 
       // Play Audio
       if (data.audio) {
+        console.log("[Frontend] Audio received, length:", data.audio.length);
         playAudio(data.audio);
+      } else {
+        console.warn("[Frontend] ⚠️ No audio in response");
+        console.log("[Frontend] Response data:", { 
+          hasText: !!data.text, 
+          hasEmotionTags: !!data.emotionTags,
+          hasAudio: !!data.audio 
+        });
       }
 
     } catch (error) {
       console.error("Error:", error);
-      setMessages((prev) => [...prev, { role: "assistant", content: "嗯... 好像有點問題... (系統錯誤)" }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "嗯… 好像有點問題… （系統錯誤）" }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const playAudio = (base64Audio: string) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      
+      const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
+      audioRef.current = audio;
+      
+      // Add error handling
+      audio.onerror = (e) => {
+        console.error("Audio playback error:", e);
+        setIsPlaying(false);
+      };
+      
+      audio.onended = () => {
+        setIsPlaying(false);
+      };
+      
+      // Play with promise handling
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            console.log("✅ Audio started playing");
+          })
+          .catch((error) => {
+            console.error("❌ Audio play failed:", error);
+            setIsPlaying(false);
+            // Try to show user-friendly error
+            setMessages((prev) => [...prev, { 
+              role: "assistant", 
+              content: "（音訊播放失敗，請檢查瀏覽器設定）" 
+            }]);
+          });
+      } else {
+        // Fallback for older browsers where play() returns undefined
+        // In this case, we assume playback started successfully
+        setIsPlaying(true);
+        console.log("✅ Audio started playing (legacy browser)");
+      }
+    } catch (error) {
+      console.error("Audio setup error:", error);
+      setIsPlaying(false);
     }
-    const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
-    audioRef.current = audio;
-    setIsPlaying(true);
-    audio.play();
-    audio.onended = () => setIsPlaying(false);
   };
 
   const bgGradient = emotionColors[currentEmotion] || emotionColors.neutral;

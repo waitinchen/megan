@@ -36,13 +36,25 @@ export async function POST(request: Request) {
         // Only generate speech if there is valid text and it's not just "..."
         if (text && text.trim() !== "..." && text.trim().length > 0) {
             try {
+                console.log(`[Chat API] Generating speech for text: "${text.substring(0, 50)}..."`);
                 // Generate speech with the FULL text (including V3 tags)
                 const audioBuffer = await generateSpeech(text, emotionTags);
-                audioBase64 = audioBuffer.toString('base64');
-            } catch (speechError) {
-                console.error("Speech generation failed:", speechError);
+                if (audioBuffer && audioBuffer.length > 0) {
+                    audioBase64 = audioBuffer.toString('base64');
+                    console.log(`[Chat API] ✅ Audio generated: ${audioBase64.length} chars (base64)`);
+                } else {
+                    console.warn("[Chat API] ⚠️ Audio buffer is empty");
+                }
+            } catch (speechError: any) {
+                console.error("[Chat API] ❌ Speech generation failed:", speechError);
+                console.error("[Chat API] Error details:", {
+                    message: speechError.message,
+                    stack: speechError.stack,
+                });
                 // We continue even if speech fails, returning just text
             }
+        } else {
+            console.warn("[Chat API] ⚠️ Skipping speech generation - invalid text");
         }
 
         // 3. Clean the text for display (remove V3 audio tags)

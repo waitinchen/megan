@@ -1,15 +1,32 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { mapEmotionToElevenLabs } from './soul/elevenlabs-adapter';
 
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+// Lazy initialization - create client only when needed
+let client: ElevenLabsClient | null = null;
+
+function getClient(): ElevenLabsClient {
+    if (!client) {
+        const apiKey = process.env.ELEVENLABS_API_KEY;
+        if (!apiKey) {
+            throw new Error("Please pass in your ElevenLabs API Key or export ELEVENLABS_API_KEY in your environment.");
+        }
+        client = new ElevenLabsClient({
+            apiKey: apiKey,
+        });
+    }
+    return client;
+}
+
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "WUEPpaWdYrRSq7wyeO9O";
 
-const client = new ElevenLabsClient({
-    apiKey: ELEVENLABS_API_KEY,
-});
-
 // Model configuration and limits
-const MODEL_LIMITS = {
+type ModelConfig = {
+    maxChars: number;
+    timeout: number;
+    fallback: string | null;
+};
+
+const MODEL_LIMITS: Record<string, ModelConfig> = {
     'eleven_v3': {
         maxChars: 5000,
         timeout: 30000, // 30 seconds for v3 (higher latency)
@@ -60,7 +77,9 @@ function truncateTextForModel(text: string, maxChars: number): string {
  * Generate speech with fallback and error handling
  */
 export async function generateSpeech(text: string, emotionTags: string[]) {
-    if (!ELEVENLABS_API_KEY) {
+    // Check API key and initialize client if needed
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) {
         throw new Error("Missing ELEVENLABS_API_KEY");
     }
 
@@ -125,7 +144,7 @@ async function generateWithFallback(
     textToSpeak: string,
     params: ReturnType<typeof mapEmotionToElevenLabs>,
     modelId: string,
-    modelConfig: typeof MODEL_LIMITS['eleven_v3']
+    modelConfig: ModelConfig
 ): Promise<Buffer> {
     const modelsToTry = [modelId];
     if (modelConfig.fallback) {
@@ -150,8 +169,11 @@ async function generateWithFallback(
 
             console.log(`[ElevenLabs] Attempting with model: ${currentModel}`);
             
+            // Get client (lazy initialization)
+            const clientInstance = getClient();
+            
             // Create a promise with timeout
-            const audioPromise = client.textToSpeech.convert(VOICE_ID, {
+            const audioPromise = clientInstance.textToSpeech.convert(VOICE_ID, {
                 text: textToSpeak,
                 modelId: currentModel,
                 voiceSettings: {
