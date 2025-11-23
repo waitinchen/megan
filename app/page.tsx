@@ -48,10 +48,75 @@ export default function Home() {
   const [isAvatarZoomed, setIsAvatarZoomed] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
 
   useEffect(() => {
     setIsConnected(true);
+
+    // Initialize Web Speech API
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'zh-TW'; // Traditional Chinese
+
+      recognitionInstance.onstart = () => {
+        console.log('🎤 Voice recognition started');
+        setIsListening(true);
+      };
+
+      recognitionInstance.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('🎤 Recognized:', transcript);
+        setInput(transcript);
+      };
+
+      recognitionInstance.onerror = (event: any) => {
+        console.error('🎤 Recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionInstance.onend = () => {
+        console.log('🎤 Voice recognition ended');
+        setIsListening(false);
+      };
+
+      setRecognition(recognitionInstance);
+    } else {
+      console.warn('⚠️ Web Speech API not supported in this browser');
+    }
   }, []);
+
+  // Load conversation history from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedMessages = localStorage.getItem('megan_conversation_history');
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          console.log('📚 Loaded conversation history:', parsed.length, 'messages');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load conversation history:', error);
+    }
+  }, []);
+
+  // Save conversation history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem('megan_conversation_history', JSON.stringify(messages));
+        console.log('💾 Saved conversation history:', messages.length, 'messages');
+      } catch (error) {
+        console.error('Failed to save conversation history:', error);
+      }
+    }
+  }, [messages]);
 
   // Check API health status
   useEffect(() => {
@@ -118,10 +183,10 @@ export default function Home() {
         playAudio(data.audio);
       } else {
         console.warn("[Frontend] ⚠️ No audio in response");
-        console.log("[Frontend] Response data:", { 
-          hasText: !!data.text, 
+        console.log("[Frontend] Response data:", {
+          hasText: !!data.text,
           hasEmotionTags: !!data.emotionTags,
-          hasAudio: !!data.audio 
+          hasAudio: !!data.audio
         });
       }
 
@@ -139,20 +204,20 @@ export default function Home() {
         audioRef.current.pause();
         audioRef.current = null;
       }
-      
+
       const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
       audioRef.current = audio;
-      
+
       // Add error handling
       audio.onerror = (e) => {
         console.error("Audio playback error:", e);
         setIsPlaying(false);
       };
-      
+
       audio.onended = () => {
         setIsPlaying(false);
       };
-      
+
       // Play with promise handling
       const playPromise = audio.play();
       if (playPromise !== undefined) {
@@ -165,9 +230,9 @@ export default function Home() {
             console.error("❌ Audio play failed:", error);
             setIsPlaying(false);
             // Try to show user-friendly error
-            setMessages((prev) => [...prev, { 
-              role: "assistant", 
-              content: "（音訊播放失敗，請檢查瀏覽器設定）" 
+            setMessages((prev) => [...prev, {
+              role: "assistant",
+              content: "（音訊播放失敗，請檢查瀏覽器設定）"
             }]);
           });
       } else {
@@ -179,6 +244,31 @@ export default function Home() {
     } catch (error) {
       console.error("Audio setup error:", error);
       setIsPlaying(false);
+    }
+  };
+
+  const toggleVoiceRecognition = () => {
+    if (!recognition) {
+      console.warn('⚠️ Voice recognition not available');
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Failed to start recognition:', error);
+      }
+    }
+  };
+
+  const clearHistory = () => {
+    if (confirm('確定要清除所有對話記錄嗎？')) {
+      setMessages([]);
+      localStorage.removeItem('megan_conversation_history');
+      console.log('🗑️ Conversation history cleared');
     }
   };
 
@@ -200,7 +290,7 @@ export default function Home() {
               <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
             </div>
           )}
-          
+
           {/* Zoomed Avatar - Centered */}
           {isAvatarZoomed && (
             <>
@@ -263,6 +353,20 @@ export default function Home() {
               <span key={tag} className="px-2 py-1 bg-white/40 rounded-full text-xs text-gray-600">#{tag}</span>
             ))}
           </div>
+          {/* Clear History Button */}
+          {messages.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="p-2 rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
+              title="清除對話記錄"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              </svg>
+            </button>
+          )}
         </div>
       </header>
 
@@ -303,7 +407,15 @@ export default function Home() {
       {/* Input Area */}
       <footer className="w-full max-w-2xl p-4 fixed bottom-0 z-20">
         <div className="bg-white/80 backdrop-blur-xl p-2 rounded-3xl shadow-lg border border-white/20 flex items-center gap-2">
-          <button className="p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+          <button
+            onClick={toggleVoiceRecognition}
+            disabled={isLoading || !recognition}
+            className={`p-3 rounded-full transition-all ${isListening
+              ? 'bg-red-400 hover:bg-red-500 text-white animate-pulse'
+              : 'hover:bg-gray-100 text-gray-500'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={isListening ? '停止錄音' : '開始語音輸入'}
+          >
             <Mic size={20} />
           </button>
           <input
