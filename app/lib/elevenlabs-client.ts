@@ -1,23 +1,13 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { mapEmotionToElevenLabs } from './soul/elevenlabs-adapter';
 
-// Lazy initialization - create client only when needed
-let client: ElevenLabsClient | null = null;
-
-function getClient(): ElevenLabsClient {
-    if (!client) {
-        const apiKey = process.env.ELEVENLABS_API_KEY;
-        if (!apiKey) {
-            throw new Error("Please pass in your ElevenLabs API Key or export ELEVENLABS_API_KEY in your environment.");
-        }
-        client = new ElevenLabsClient({
-            apiKey: apiKey,
-        });
-    }
-    return client;
-}
-
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "WUEPpaWdYrRSq7wyeO9O";
+
+const client = new ElevenLabsClient({
+    apiKey: ELEVENLABS_API_KEY,
+});
+
 
 // Model configuration and limits
 type ModelConfig = {
@@ -51,25 +41,25 @@ function truncateTextForModel(text: string, maxChars: number): string {
     if (text.length <= maxChars) {
         return text;
     }
-    
+
     // Try to preserve V3 tags at the start
     const tagMatch = text.match(/^(\[[^\]]+\]\s*)+/);
     const tags = tagMatch ? tagMatch[0] : '';
     const content = text.slice(tags.length);
-    
+
     // Truncate content, leaving room for tags
     const maxContentLength = maxChars - tags.length;
     const truncatedContent = content.slice(0, maxContentLength);
-    
+
     // Try to cut at sentence boundary
-    const lastSentenceEnd = truncatedContent.lastIndexOf('。') || 
-                           truncatedContent.lastIndexOf('.') || 
-                           truncatedContent.lastIndexOf('…');
-    
+    const lastSentenceEnd = truncatedContent.lastIndexOf('。') ||
+        truncatedContent.lastIndexOf('.') ||
+        truncatedContent.lastIndexOf('…');
+
     if (lastSentenceEnd > maxContentLength * 0.7) {
         return tags + truncatedContent.slice(0, lastSentenceEnd + 1);
     }
-    
+
     return tags + truncatedContent;
 }
 
@@ -77,9 +67,7 @@ function truncateTextForModel(text: string, maxChars: number): string {
  * Generate speech with fallback and error handling
  */
 export async function generateSpeech(text: string, emotionTags: string[]) {
-    // Check API key and initialize client if needed
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-    if (!apiKey) {
+    if (!ELEVENLABS_API_KEY) {
         throw new Error("Missing ELEVENLABS_API_KEY");
     }
 
@@ -88,39 +76,16 @@ export async function generateSpeech(text: string, emotionTags: string[]) {
 
     // 2. Prepare the text - use processed_text if V3 tags were injected, otherwise use original
     let textToSpeak = params.processed_text || ((params.text_prefix || "") + text);
-    
-    // 3. Build comprehensive context for emotionally-aware models
-    // Eleven v3 and multilingual_v2 need rich context to understand emotional intent
-    // Add tone-establishing preamble to help model understand the desired emotional delivery
-    
-    // Build context preamble based on emotion tags
-    let contextPreamble = "";
-    if (emotionTags.includes('flirty') || emotionTags.includes('playful')) {
-        contextPreamble = `[breathy][slow][mischievously] `;
-    } else if (emotionTags.includes('sad') || emotionTags.includes('tender')) {
-        contextPreamble = `[sighs][breathy][slow] `;
-    } else if (emotionTags.includes('whisper') || emotionTags.includes('softer')) {
-        contextPreamble = `[whispers][breathy][slow] `;
-    } else {
-        // Default: establish intimate, breathy tone for Megan persona
-        contextPreamble = `[breathy][slow] `;
-    }
-    
-    // For emotionally-aware models, we need sufficient context
-    // If text is too short, add preamble to establish tone
-    // This helps the model understand the emotional context before generating
-    if (textToSpeak.length < 150) {
-        textToSpeak = contextPreamble + textToSpeak;
-    } else if (!textToSpeak.startsWith('[')) {
-        // Even for longer text, add context if no V3 tags at start
-        textToSpeak = contextPreamble + textToSpeak;
-    }
 
-    // 4. Get model configuration
+    // NOTE: V3 tags should ONLY come from the LLM's response or the adapter
+    // Do NOT add additional tags here, as they will be spoken aloud
+    // The LLM is instructed to include V3 tags in its responses when appropriate
+
+    // 3. Get model configuration
     const primaryModelId = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2";
     const modelConfig = MODEL_LIMITS[primaryModelId as keyof typeof MODEL_LIMITS] || MODEL_LIMITS['eleven_multilingual_v2'];
-    
-    // 5. Character limit check and truncation
+
+    // 4. Character limit check and truncation
     if (textToSpeak.length > modelConfig.maxChars) {
         console.warn(`[ElevenLabs] Text exceeds ${primaryModelId} limit (${textToSpeak.length} > ${modelConfig.maxChars}), truncating...`);
         textToSpeak = truncateTextForModel(textToSpeak, modelConfig.maxChars);
@@ -133,7 +98,7 @@ export async function generateSpeech(text: string, emotionTags: string[]) {
     console.log(`[ElevenLabs] Emotion Tags: ${emotionTags.join(', ')}`);
     console.log(`[ElevenLabs] Timeout: ${modelConfig.timeout}ms`);
 
-    // 6. Try primary model with timeout and fallback
+    // 5. Try primary model with timeout and fallback
     return await generateWithFallback(textToSpeak, params, primaryModelId, modelConfig);
 }
 
@@ -144,7 +109,7 @@ async function generateWithFallback(
     textToSpeak: string,
     params: ReturnType<typeof mapEmotionToElevenLabs>,
     modelId: string,
-    modelConfig: ModelConfig
+    modelConfig: typeof MODEL_LIMITS['eleven_v3']
 ): Promise<Buffer> {
     const modelsToTry = [modelId];
     if (modelConfig.fallback) {
@@ -154,7 +119,7 @@ async function generateWithFallback(
     for (const currentModel of modelsToTry) {
         try {
             const currentConfig = MODEL_LIMITS[currentModel as keyof typeof MODEL_LIMITS] || MODEL_LIMITS['eleven_multilingual_v2'];
-            
+
             // Check character limit for current model
             if (textToSpeak.length > currentConfig.maxChars) {
                 if (currentModel === modelsToTry[modelsToTry.length - 1]) {
@@ -168,12 +133,12 @@ async function generateWithFallback(
             }
 
             console.log(`[ElevenLabs] Attempting with model: ${currentModel}`);
-            
-            // Get client (lazy initialization)
-            const clientInstance = getClient();
-            
+
+            // Note: Language is auto-detected by ElevenLabs multilingual models
+            // The model will automatically detect Chinese characters and use appropriate pronunciation
+
             // Create a promise with timeout
-            const audioPromise = clientInstance.textToSpeech.convert(VOICE_ID, {
+            const audioPromise = client.textToSpeech.convert(VOICE_ID, {
                 text: textToSpeak,
                 modelId: currentModel,
                 voiceSettings: {
@@ -205,7 +170,7 @@ async function generateWithFallback(
                     chunks.push(value);
                 }
             }
-            
+
             const duration = Date.now() - startTime;
             console.log(`[ElevenLabs] ✅ Success with ${currentModel} (${duration}ms)`);
             return Buffer.concat(chunks);
@@ -213,12 +178,12 @@ async function generateWithFallback(
         } catch (error: any) {
             const errorMsg = error.message || String(error);
             console.error(`[ElevenLabs] ❌ ${currentModel} failed: ${errorMsg}`);
-            
+
             // If this is the last model to try, throw the error
             if (currentModel === modelsToTry[modelsToTry.length - 1]) {
                 throw new Error(`All models failed. Last error: ${errorMsg}`);
             }
-            
+
             // Otherwise, try the next fallback model
             const currentConfig = MODEL_LIMITS[currentModel as keyof typeof MODEL_LIMITS] || MODEL_LIMITS['eleven_multilingual_v2'];
             const nextModel = currentConfig.fallback || modelsToTry[modelsToTry.indexOf(currentModel) + 1];
@@ -228,7 +193,7 @@ async function generateWithFallback(
             continue;
         }
     }
-    
+
     // Should never reach here, but TypeScript needs it
     throw new Error("No models available");
 }
