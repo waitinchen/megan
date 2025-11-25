@@ -9,27 +9,14 @@ export async function GET() {
 
     // Check ElevenLabs API
     try {
-        const apiKey = process.env.ELEVENLABS_API_KEY;
-        if (!apiKey) {
-            console.error('[Health Check] ELEVENLABS_API_KEY is not set');
-            status.elevenlabs = 'error';
-        } else {
-            const elResponse = await fetch('https://api.elevenlabs.io/v1/user', {
-                headers: {
-                    'xi-api-key': apiKey,
-                },
-            });
-            if (elResponse.ok) {
-                status.elevenlabs = 'ok';
-                console.log('[Health Check] ElevenLabs API: OK');
-            } else {
-                const errorText = await elResponse.text();
-                console.error(`[Health Check] ElevenLabs API failed: ${elResponse.status} - ${errorText}`);
-                status.elevenlabs = 'error';
-            }
-        }
-    } catch (error: any) {
-        console.error('[Health Check] ElevenLabs health check failed:', error.message);
+        const elResponse = await fetch('https://api.elevenlabs.io/v1/user', {
+            headers: {
+                'xi-api-key': process.env.ELEVENLABS_API_KEY || '',
+            },
+        });
+        status.elevenlabs = elResponse.ok ? 'ok' : 'error';
+    } catch (error) {
+        console.error('ElevenLabs health check failed:', error);
         status.elevenlabs = 'error';
     }
 
@@ -37,7 +24,6 @@ export async function GET() {
     try {
         const apiKey = process.env.GOOGLE_API_KEY;
         if (!apiKey) {
-            console.error('[Health Check] GOOGLE_API_KEY is not set');
             status.llm = 'error';
         } else {
             const genAI = new GoogleGenerativeAI(apiKey);
@@ -50,16 +36,10 @@ export async function GET() {
             const response = await result.response;
             const text = response.text();
 
-            if (text && text.length > 0) {
-                status.llm = 'ok';
-                console.log('[Health Check] Google Gemini API: OK');
-            } else {
-                console.error('[Health Check] Google Gemini returned empty response');
-                status.llm = 'error';
-            }
+            status.llm = text && text.length > 0 ? 'ok' : 'error';
         }
     } catch (error: any) {
-        console.error('[Health Check] Google Gemini health check failed:', error.message);
+        console.error('Google Gemini health check failed:', error.message);
         status.llm = 'error';
     }
 
