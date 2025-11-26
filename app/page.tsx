@@ -369,23 +369,38 @@ export default function Home() {
 
       {/* Input Area */}
       <footer className="w-full max-w-2xl p-4 fixed bottom-0 z-20">
-        <div className="bg-white/80 backdrop-blur-xl p-2 rounded-3xl shadow-lg border border-white/20 flex items-center gap-2">
-          <button className="p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+        <div className="bg-white/80 backdrop-blur-xl p-2 rounded-3xl shadow-lg border border-white/20 flex items-end gap-2">
+          <button className="p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-colors mb-1">
             <Mic size={20} />
           </button>
-          <input
-            type="text"
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="請按此輸入文字..."
-            className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 px-2"
+            onKeyDown={(e) => {
+              // Enter 發送，Shift+Enter 換行
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="請按此輸入文字... (Shift+Enter 換行)"
+            className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 px-2 py-2 resize-none max-h-32 overflow-y-auto"
+            rows={1}
             disabled={isLoading}
+            style={{
+              minHeight: '24px',
+              height: 'auto'
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+            }}
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="p-3 rounded-full bg-rose-400 hover:bg-rose-500 text-white shadow-md transition-all disabled:opacity-50 disabled:hover:bg-rose-400"
+            className="p-3 rounded-full bg-rose-400 hover:bg-rose-500 text-white shadow-md transition-all disabled:opacity-50 disabled:hover:bg-rose-400 mb-1"
           >
             <Send size={18} />
           </button>
