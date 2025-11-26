@@ -50,6 +50,7 @@ export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   // Load conversation history from localStorage on mount
   useEffect(() => {
@@ -217,6 +218,49 @@ export default function Home() {
     }
   };
 
+  // Voice input handler
+  const handleVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('抱歉，你的瀏覽器不支持語音輸入功能。請使用 Chrome、Edge 或 Safari。');
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = 'zh-TW'; // 繁體中文
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      console.log('[Megan] 🎤 開始語音識別');
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      console.log('[Megan] 🎤 識別結果:', transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('[Megan] 🎤 語音識別錯誤:', event.error);
+      setIsListening(false);
+      if (event.error === 'no-speech') {
+        alert('沒有檢測到語音，請再試一次。');
+      } else if (event.error === 'not-allowed') {
+        alert('請允許麥克風權限以使用語音輸入功能。');
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      console.log('[Megan] 🎤 語音識別結束');
+    };
+
+    recognition.start();
+  };
+
   const bgGradient = emotionColors[currentEmotion] || emotionColors.neutral;
   const currentEmoji = emotionEmojis[currentEmotion] || "🌸";
 
@@ -370,7 +414,16 @@ export default function Home() {
       {/* Input Area */}
       <footer className="w-full max-w-2xl p-4 fixed bottom-0 z-20">
         <div className="bg-white/80 backdrop-blur-xl p-2 rounded-3xl shadow-lg border border-white/20 flex items-end gap-2">
-          <button className="p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-colors mb-1">
+          <button
+            onClick={handleVoiceInput}
+            disabled={isLoading || isListening}
+            className={`p-3 rounded-full transition-all mb-1 ${
+              isListening
+                ? 'bg-red-500 text-white animate-pulse'
+                : 'hover:bg-gray-100 text-gray-500'
+            }`}
+            title={isListening ? '正在錄音...' : '點擊開始語音輸入'}
+          >
             <Mic size={20} />
           </button>
           <textarea
