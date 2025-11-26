@@ -246,8 +246,10 @@ export default function Home() {
 
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
-      setInput(transcript);
       console.log('[Megan] 🎤 識別結果:', transcript);
+
+      // 先設置輸入
+      setInput(transcript);
 
       // 清除之前的自動發送計時器（如果存在）
       if (autoSendTimerRef.current) {
@@ -255,10 +257,80 @@ export default function Home() {
       }
 
       // 4 秒後自動發送
-      autoSendTimerRef.current = setTimeout(() => {
-        console.log('[Megan] ⏱️ 自動發送語音輸入');
-        if (transcript.trim()) {
-          handleSend();
+      autoSendTimerRef.current = setTimeout(async () => {
+        console.log('[Megan] ⏱️ 自動發送語音輸入:', transcript);
+
+        const trimmedInput = transcript.trim();
+        if (!trimmedInput || isLoading) {
+          console.log('[Megan] ⏱️ 自動發送取消：內容為空或正在載入');
+          return;
+        }
+
+        // 清除計時器
+        if (autoSendTimerRef.current) {
+          clearTimeout(autoSendTimerRef.current);
+          autoSendTimerRef.current = null;
+        }
+
+        // 創建用戶訊息
+        const userMessage: Message = { role: "user", content: trimmedInput };
+        setMessages((prevMessages) => [...prevMessages, userMessage]);
+        setInput("");
+        setIsLoading(true);
+
+        try {
+          // 準備完整對話記錄
+          const fullHistory = await new Promise<any[]>((resolve) => {
+            setMessages((prevMessages) => {
+              const history = [...prevMessages, userMessage].map(m => ({
+                role: m.role,
+                content: m.content
+              }));
+              resolve(history);
+              return prevMessages;
+            });
+          });
+
+          console.log('[Megan] 📤 發送對話記錄:', fullHistory.length, '則訊息');
+
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: fullHistory,
+              userIdentity: "dad",
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          // 更新情緒
+          const dominantEmotion = data.emotionTags?.[0] || "neutral";
+          setCurrentEmotion(dominantEmotion);
+
+          // 添加助手訊息
+          const assistantMessage: Message = {
+            role: "assistant",
+            content: data.text,
+            emotion: data.emotionTags,
+            audio: data.audio,
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+
+          // 播放音訊
+          if (data.audio) {
+            playAudio(data.audio);
+          }
+
+        } catch (error) {
+          console.error("Error:", error);
+          setMessages((prev) => [...prev, { role: "assistant", content: "嗯... 好像有點問題... (系統錯誤)" }]);
+        } finally {
+          setIsLoading(false);
         }
       }, 4000);
     };
