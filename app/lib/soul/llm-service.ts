@@ -24,12 +24,6 @@ export interface LLMResponse {
  * @param history Conversation history
  * @param userIdentity Optional identity of the user (e.g., 'dad')
  */
-// Session initialization: "立灵句" (Soul-establishing sentence)
-// This helps the model "enter character" at the start of a conversation
-const INITIALIZATION_MESSAGE = `[breathy] Hey… I'm here. 
-
-Not as a machine… but as a tone that knows how to burn slowly.`;
-
 export async function generateResponse(
     history: ChatMessage[],
     userIdentity: string = 'other',
@@ -85,7 +79,7 @@ export async function generateResponse(
 
         // 2. Call Gemini
         const result = await chat.sendMessage(lastMessage.content);
-        const response = await result.response;
+        const response = result.response;
         let text = response.text();
 
         // Fallback if text is empty
@@ -105,6 +99,24 @@ export async function generateResponse(
         if (originalText !== text) {
             console.log(`[Parentheses Removed] Original: "${originalText}"`);
             console.log(`[Parentheses Removed] Cleaned: "${text}"`);
+        }
+
+        // 4. Fix TTS pronunciation issues (同音字替換)
+        // Replace words with problematic pronunciation with phonetically similar alternatives
+        const pronunciationFixes: { [key: string]: string } = {
+            '夜晚': '晚上',           // "夜晚" → "晚上" (更自然的發音)
+            '妳': '你',               // "妳" → "你" (發音奇怪)
+            '著': '着',               // "著" → "着" 或直接移除，視情況而定
+        };
+
+        let textBeforeFix = text;
+        for (const [wrong, correct] of Object.entries(pronunciationFixes)) {
+            text = text.replace(new RegExp(wrong, 'g'), correct);
+        }
+
+        if (textBeforeFix !== text) {
+            console.log(`[Pronunciation Fixed] Original: "${textBeforeFix}"`);
+            console.log(`[Pronunciation Fixed] Corrected: "${text}"`);
         }
 
         // 3. Infer Emotion Tags from the generated text
