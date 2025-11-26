@@ -543,7 +543,7 @@ export default function Home() {
               }
             }}
             placeholder="請按此輸入文字... (Shift+Enter 換行)"
-            className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 px-2 py-2 resize-none max-h-32 overflow-y-auto"
+            className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 placeholder:text-sm px-2 py-2 resize-none max-h-32 overflow-y-auto"
             rows={1}
             disabled={isLoading}
             style={{
