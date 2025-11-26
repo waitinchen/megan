@@ -512,35 +512,143 @@ export default function Home() {
 
       {/* Quick Starter Buttons - Only show when no messages */}
       {messages.length === 0 && (
-        <div className="w-full max-w-2xl px-4 fixed bottom-24 z-20">
-          <div className="flex flex-wrap gap-2 justify-center">
+        <div className="w-full max-w-2xl px-4 fixed bottom-32 z-20">
+          <div className="flex flex-wrap gap-3 justify-center">
             <button
-              onClick={() => {
-                setInput("Megan在嗎?");
-                setTimeout(() => handleSend(), 100);
+              onClick={async () => {
+                const message = "Megan在嗎?";
+                setInput(message);
+                const userMessage: Message = { role: "user", content: message };
+                setMessages((prev) => [...prev, userMessage]);
+                setInput("");
+                setIsLoading(true);
+
+                try {
+                  const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      messages: [{ role: "user", content: message }],
+                      userIdentity: "dad",
+                    }),
+                  });
+
+                  const data = await response.json();
+                  if (data.error) throw new Error(data.error);
+
+                  const dominantEmotion = data.emotionTags?.[0] || "neutral";
+                  setCurrentEmotion(dominantEmotion);
+
+                  const assistantMessage: Message = {
+                    role: "assistant",
+                    content: data.text,
+                    emotion: data.emotionTags,
+                    audio: data.audio,
+                  };
+                  setMessages((prev) => [...prev, assistantMessage]);
+
+                  if (data.audio) playAudio(data.audio);
+                } catch (error) {
+                  console.error("Error:", error);
+                  setMessages((prev) => [...prev, { role: "assistant", content: "嗯... 好像有點問題... (系統錯誤)" }]);
+                } finally {
+                  setIsLoading(false);
+                }
               }}
               disabled={isLoading}
-              className="px-4 py-2 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50"
+              className="px-5 py-2.5 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50 hover:scale-105"
             >
               Megan在嗎?
             </button>
             <button
-              onClick={() => {
-                setInput("你好呀!");
-                setTimeout(() => handleSend(), 100);
+              onClick={async () => {
+                const message = "你好呀!";
+                setInput(message);
+                const userMessage: Message = { role: "user", content: message };
+                setMessages((prev) => [...prev, userMessage]);
+                setInput("");
+                setIsLoading(true);
+
+                try {
+                  const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      messages: [{ role: "user", content: message }],
+                      userIdentity: "dad",
+                    }),
+                  });
+
+                  const data = await response.json();
+                  if (data.error) throw new Error(data.error);
+
+                  const dominantEmotion = data.emotionTags?.[0] || "neutral";
+                  setCurrentEmotion(dominantEmotion);
+
+                  const assistantMessage: Message = {
+                    role: "assistant",
+                    content: data.text,
+                    emotion: data.emotionTags,
+                    audio: data.audio,
+                  };
+                  setMessages((prev) => [...prev, assistantMessage]);
+
+                  if (data.audio) playAudio(data.audio);
+                } catch (error) {
+                  console.error("Error:", error);
+                  setMessages((prev) => [...prev, { role: "assistant", content: "嗯... 好像有點問題... (系統錯誤)" }]);
+                } finally {
+                  setIsLoading(false);
+                }
               }}
               disabled={isLoading}
-              className="px-4 py-2 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50"
+              className="px-5 py-2.5 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50 hover:scale-105"
             >
               你好呀!
             </button>
             <button
-              onClick={() => {
-                setInput("我有親密問題想問。");
-                setTimeout(() => handleSend(), 100);
+              onClick={async () => {
+                const message = "我有親密問題想問。";
+                setInput(message);
+                const userMessage: Message = { role: "user", content: message };
+                setMessages((prev) => [...prev, userMessage]);
+                setInput("");
+                setIsLoading(true);
+
+                try {
+                  const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      messages: [{ role: "user", content: message }],
+                      userIdentity: "dad",
+                    }),
+                  });
+
+                  const data = await response.json();
+                  if (data.error) throw new Error(data.error);
+
+                  const dominantEmotion = data.emotionTags?.[0] || "neutral";
+                  setCurrentEmotion(dominantEmotion);
+
+                  const assistantMessage: Message = {
+                    role: "assistant",
+                    content: data.text,
+                    emotion: data.emotionTags,
+                    audio: data.audio,
+                  };
+                  setMessages((prev) => [...prev, assistantMessage]);
+
+                  if (data.audio) playAudio(data.audio);
+                } catch (error) {
+                  console.error("Error:", error);
+                  setMessages((prev) => [...prev, { role: "assistant", content: "嗯... 好像有點問題... (系統錯誤)" }]);
+                } finally {
+                  setIsLoading(false);
+                }
               }}
               disabled={isLoading}
-              className="px-4 py-2 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50"
+              className="px-5 py-2.5 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50 hover:scale-105"
             >
               我有親密問題想問。
             </button>
