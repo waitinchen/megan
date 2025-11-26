@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Volume2, Sparkles } from "lucide-react";
+import { Send, Mic, Volume2, Sparkles, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Emotion to Color Mapping
@@ -48,10 +48,38 @@ export default function Home() {
   const [isAvatarZoomed, setIsAvatarZoomed] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  // Load conversation history from localStorage on mount
   useEffect(() => {
     setIsConnected(true);
+
+    // Load saved messages
+    try {
+      const savedMessages = localStorage.getItem('megan_conversation_history');
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          console.log('[Megan] 載入對話記錄:', parsed.length, '則訊息');
+        }
+      }
+    } catch (error) {
+      console.error('[Megan] 載入對話記錄失敗:', error);
+    }
   }, []);
+
+  // Save conversation history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem('megan_conversation_history', JSON.stringify(messages));
+        console.log('[Megan] 💾 已儲存對話記錄:', messages.length, '則訊息');
+      } catch (error) {
+        console.error('[Megan] 儲存對話記錄失敗:', error);
+      }
+    }
+  }, [messages]);
 
   // Check API health status
   useEffect(() => {
@@ -136,6 +164,17 @@ export default function Home() {
     audio.onended = () => setIsPlaying(false);
   };
 
+  const handleClearHistory = () => {
+    try {
+      localStorage.removeItem('megan_conversation_history');
+      setMessages([]);
+      setShowClearConfirm(false);
+      console.log('[Megan] 🗑️ 對話記錄已清除');
+    } catch (error) {
+      console.error('[Megan] 清除對話記錄失敗:', error);
+    }
+  };
+
   const bgGradient = emotionColors[currentEmotion] || emotionColors.neutral;
   const currentEmoji = emotionEmojis[currentEmotion] || "🌸";
 
@@ -190,6 +229,16 @@ export default function Home() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
+          {/* Clear History Button */}
+          {messages.length > 0 && (
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+              title="清除對話記錄"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
           {/* API Status Indicator */}
           <div className="flex gap-2 text-xs font-mono">
             <div className="flex items-center gap-1">
@@ -281,6 +330,38 @@ export default function Home() {
           <p className="text-[10px] text-white/20">Powered by EL V3 & Lingya Soul</p>
         </div>
       </footer>
+
+      {/* Clear Confirmation Dialog */}
+      {showClearConfirm && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-[9998] backdrop-blur-sm"
+            onClick={() => setShowClearConfirm(false)}
+          />
+          <div className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 pointer-events-auto">
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">清除對話記錄？</h3>
+              <p className="text-sm text-slate-600 mb-6">
+                確定要清除所有對話記錄嗎？此操作無法復原。
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleClearHistory}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
+                >
+                  清除
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </main>
   );
 }
