@@ -221,54 +221,52 @@ export default function Home() {
   const currentEmoji = emotionEmojis[currentEmotion] || "🌸";
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-[#F3F0F5]">
+    <div className="flex min-h-screen flex-col items-center bg-[#F3F0F5]">
 
       {/* Floating Avatar & Name - Fixed Position */}
-      <div className="fixed top-6 left-6 z-50 flex items-center gap-3 bg-white/80 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-lg border border-white/20">
-        {/* Avatar Container */}
-        {!isAvatarZoomed && (
+      {!isAvatarZoomed && (
+        <div className="fixed top-6 left-6 z-50 flex items-center gap-3 bg-white/80 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-lg border border-white/20">
+          {/* Avatar Container */}
           <div
             className="relative w-12 h-12 border-2 border-white/50 shadow-sm rounded-full overflow-hidden cursor-pointer transition-all duration-300 ease-in-out hover:scale-105"
             onClick={() => setIsAvatarZoomed(true)}
           >
             <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
           </div>
-        )}
 
-        {/* Zoomed Avatar - Centered */}
-        {isAvatarZoomed && (
-          <>
-            <div
-              className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
-            >
-              <div
-                className="w-80 h-80 shadow-2xl border-4 border-white rounded-full overflow-hidden cursor-pointer pointer-events-auto transition-all duration-300 ease-in-out"
-                onClick={() => setIsAvatarZoomed(false)}
-              >
-                <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
-              </div>
+          <div>
+            <h1 className="font-semibold text-slate-800">Megan</h1>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
+              <span className="text-xs text-slate-500 font-medium">
+                {isConnected ? "在線上" : "連線中..."}
+              </span>
             </div>
-          </>
-        )}
+          </div>
+        </div>
+      )}
 
-        {/* Overlay for Zoom */}
-        {isAvatarZoomed && (
+      {/* Zoomed Avatar - Centered (Full Screen Overlay) */}
+      {isAvatarZoomed && (
+        <>
+          {/* Dark Overlay */}
           <div
             className="fixed inset-0 bg-black/60 z-[9998] backdrop-blur-sm"
             onClick={() => setIsAvatarZoomed(false)}
           />
-        )}
-
-        <div>
-          <h1 className="font-semibold text-slate-800">Megan</h1>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
-            <span className="text-xs text-slate-500 font-medium">
-              {isConnected ? "在線上" : "連線中..."}
-            </span>
+          {/* Centered Avatar */}
+          <div
+            className="fixed inset-0 flex items-center justify-center z-[9999] p-4"
+          >
+            <div
+              className="w-full max-w-md h-[85vh] shadow-2xl border-4 border-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 ease-in-out bg-white"
+              onClick={() => setIsAvatarZoomed(false)}
+            >
+              <img src="/avatar.png" alt="Megan" className="w-full h-full object-contain" />
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Header / Status - Right Side Only */}
       <header className="fixed top-6 right-6 z-50 flex items-center justify-end">
@@ -428,6 +426,6 @@ export default function Home() {
           </div>
         </>
       )}
-    </main>
+    </div>
   );
 }

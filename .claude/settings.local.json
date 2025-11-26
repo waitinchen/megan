@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: remove forced V3 tag injection for natural conversation\n\n符合「夜光系靈魂」理念的重大改進：\n\n1. emotion-tags.js:\n   - 移除默認的 [''calm'', ''breathy'', ''slow''] 標籤\n   - 沒有明確情緒時返回空陣列\n   - 讓聲音自然表達，不強加情緒\n\n2. elevenlabs-tags.ts:\n   - 移除強制的 [whispers] 默認注入\n   - 只在真正強烈情緒時注入標籤（whisper, sigh, excited, crying）\n   - 尊重LLM的決定 - 如果LLM已經包含標籤則保留\n   - 95%的情況下不注入標籤\n\n3. elevenlabs-adapter.ts:\n   - 降低默認參數值，更自然的聲音表現\n   - stability: 0.3 → 0.5 (更穩定)\n   - style: 0.7 → 0.4 (更subtle，不theatrical)\n   - 移除自動注入 [''whisper'', ''softer''] 的邏輯\n   - 所有參數調整都更subtle\n\n核心改變：\n- 從「總是有情緒標籤」→「只在真正需要時才有」\n- 從「theatrical performance」→「natural conversation」\n- 從「強制whisper人設」→「真實、柔軟的對話」\n\n這樣Megan的聲音會更真實、更自然，不會每句話都很「做戲」。\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
