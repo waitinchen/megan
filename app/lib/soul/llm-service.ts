@@ -119,6 +119,41 @@ export async function generateResponse(
             console.log(`[Pronunciation Fixed] Corrected: "${text}"`);
         }
 
+        // 5. Reduce excessive pause symbols (減少過多的停頓符號)
+        // Replace multiple "..." with single "..." or remove based on context
+        const textBeforePauseReduction = text;
+
+        // Step 1: Replace multiple consecutive "..." with single "..."
+        text = text.replace(/\.{3,}/g, '...');
+
+        // Step 2: Reduce frequency - keep only some pauses (approximately 20% retention)
+        const sentences = text.split(/([。！？\n])/);
+        let pauseCount = 0;
+        const maxPausesPerSentence = 1;
+
+        for (let i = 0; i < sentences.length; i++) {
+            const pausesInSentence = (sentences[i].match(/\.\.\./g) || []).length;
+
+            if (pausesInSentence > maxPausesPerSentence) {
+                // Keep only first pause, remove others
+                let count = 0;
+                sentences[i] = sentences[i].replace(/\.\.\./g, (match) => {
+                    count++;
+                    return count === 1 ? match : '，';
+                });
+            }
+        }
+
+        text = sentences.join('');
+
+        // Step 3: Clean up any remaining excessive pauses at start/end
+        text = text.replace(/^\.{3,}\s*/g, '').replace(/\s*\.{3,}$/g, '');
+
+        if (textBeforePauseReduction !== text) {
+            console.log(`[Pause Reduced] Original: "${textBeforePauseReduction}"`);
+            console.log(`[Pause Reduced] Cleaned: "${text}"`);
+        }
+
         // 3. Infer Emotion Tags from the generated text
         const emotionTags = inferEmotionTags(text, { userIdentity });
 
