@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "我是 | 梅根  🖤",
   description: "Moon-Shadow Tone Spirit",
+  icons: {
+    icon: '/avatar.png',
+    shortcut: '/avatar.png',
+    apple: '/avatar.png',
+  },
 };
 
 export default function RootLayout({
