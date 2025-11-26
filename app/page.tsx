@@ -223,53 +223,55 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center bg-[#F3F0F5]">
 
-      {/* Header / Status */}
-      <header className="w-full max-w-2xl p-6 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3">
-          {/* Avatar Container */}
-          {!isAvatarZoomed && (
+      {/* Floating Avatar & Name - Fixed Position */}
+      <div className="fixed top-6 left-6 z-50 flex items-center gap-3 bg-white/80 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-lg border border-white/20">
+        {/* Avatar Container */}
+        {!isAvatarZoomed && (
+          <div
+            className="relative w-12 h-12 border-2 border-white/50 shadow-sm rounded-full overflow-hidden cursor-pointer transition-all duration-300 ease-in-out hover:scale-105"
+            onClick={() => setIsAvatarZoomed(true)}
+          >
+            <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        {/* Zoomed Avatar - Centered */}
+        {isAvatarZoomed && (
+          <>
             <div
-              className="relative w-12 h-12 border-2 border-white/50 shadow-sm rounded-full overflow-hidden cursor-pointer transition-all duration-300 ease-in-out"
-              onClick={() => setIsAvatarZoomed(true)}
+              className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
             >
-              <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
-            </div>
-          )}
-          
-          {/* Zoomed Avatar - Centered */}
-          {isAvatarZoomed && (
-            <>
               <div
-                className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none"
+                className="w-80 h-80 shadow-2xl border-4 border-white rounded-full overflow-hidden cursor-pointer pointer-events-auto transition-all duration-300 ease-in-out"
+                onClick={() => setIsAvatarZoomed(false)}
               >
-                <div
-                  className="w-80 h-80 shadow-2xl border-4 border-white rounded-full overflow-hidden cursor-pointer pointer-events-auto transition-all duration-300 ease-in-out"
-                  onClick={() => setIsAvatarZoomed(false)}
-                >
-                  <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
-                </div>
+                <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
               </div>
-            </>
-          )}
-
-          {/* Overlay for Zoom */}
-          {isAvatarZoomed && (
-            <div
-              className="fixed inset-0 bg-black/60 z-[9998] backdrop-blur-sm"
-              onClick={() => setIsAvatarZoomed(false)}
-            />
-          )}
-
-          <div>
-            <h1 className="font-semibold text-slate-800">Megan</h1>
-            <div className="flex items-center gap-1.5">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
-              <span className="text-xs text-slate-500 font-medium">
-                {isConnected ? "在線上" : "連線中..."}
-              </span>
             </div>
+          </>
+        )}
+
+        {/* Overlay for Zoom */}
+        {isAvatarZoomed && (
+          <div
+            className="fixed inset-0 bg-black/60 z-[9998] backdrop-blur-sm"
+            onClick={() => setIsAvatarZoomed(false)}
+          />
+        )}
+
+        <div>
+          <h1 className="font-semibold text-slate-800">Megan</h1>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
+            <span className="text-xs text-slate-500 font-medium">
+              {isConnected ? "在線上" : "連線中..."}
+            </span>
           </div>
         </div>
+      </div>
+
+      {/* Header / Status - Right Side Only */}
+      <header className="fixed top-6 right-6 z-50 flex items-center justify-end">
         <div className="flex gap-2 items-center">
           {/* Clear History Button */}
           {messages.length > 0 && (
@@ -311,8 +313,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Chat Area */}
-      <main className="flex-1 w-full max-w-2xl p-4 overflow-y-auto space-y-6 pb-32 scrollbar-hide">
+      {/* Chat Area - Add top padding to avoid fixed header */}
+      <div className="flex-1 w-full max-w-2xl p-4 pt-24 overflow-y-auto space-y-6 pb-32 scrollbar-hide">
         <AnimatePresence>
           {messages.map((msg, idx) => (
             <motion.div
@@ -365,7 +367,7 @@ export default function Home() {
           )}
         </AnimatePresence>
         <div ref={messagesEndRef} />
-      </main>
+      </div>
 
       {/* Input Area */}
       <footer className="w-full max-w-2xl p-4 fixed bottom-0 z-20">
