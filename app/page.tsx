@@ -51,6 +51,7 @@ export default function Home() {
   const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load conversation history from localStorage on mount
   useEffect(() => {
@@ -108,6 +109,12 @@ export default function Home() {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+
+    // 清除自動發送計時器（如果用戶手動發送）
+    if (autoSendTimerRef.current) {
+      clearTimeout(autoSendTimerRef.current);
+      autoSendTimerRef.current = null;
+    }
 
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -241,11 +248,31 @@ export default function Home() {
       const transcript = event.results[0][0].transcript;
       setInput(transcript);
       console.log('[Megan] 🎤 識別結果:', transcript);
+
+      // 清除之前的自動發送計時器（如果存在）
+      if (autoSendTimerRef.current) {
+        clearTimeout(autoSendTimerRef.current);
+      }
+
+      // 4 秒後自動發送
+      autoSendTimerRef.current = setTimeout(() => {
+        console.log('[Megan] ⏱️ 自動發送語音輸入');
+        if (transcript.trim()) {
+          handleSend();
+        }
+      }, 4000);
     };
 
     recognition.onerror = (event: any) => {
       console.error('[Megan] 🎤 語音識別錯誤:', event.error);
       setIsListening(false);
+
+      // 清除自動發送計時器
+      if (autoSendTimerRef.current) {
+        clearTimeout(autoSendTimerRef.current);
+        autoSendTimerRef.current = null;
+      }
+
       if (event.error === 'no-speech') {
         alert('沒有檢測到語音，請再試一次。');
       } else if (event.error === 'not-allowed') {
@@ -428,7 +455,14 @@ export default function Home() {
           </button>
           <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              // 用戶手動修改輸入框時，取消自動發送計時器
+              if (autoSendTimerRef.current) {
+                clearTimeout(autoSendTimerRef.current);
+                autoSendTimerRef.current = null;
+              }
+            }}
             onKeyDown={(e) => {
               // Enter 發送，Shift+Enter 換行
               if (e.key === "Enter" && !e.shiftKey) {
