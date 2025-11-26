@@ -40,9 +40,12 @@ export async function generateResponse(
         // Filter out system messages from input history
         const userMessages = history.filter(msg => msg.role !== 'system');
 
+        console.log(`[LLM Service] 📥 收到對話記錄: ${userMessages.length} 則訊息`);
+        console.log(`[LLM Service] First message: ${isFirstMessage}`);
+
         // Convert to Gemini format
         const geminiHistory = [];
-        
+
         // Normal history processing (excluding the last message which we'll send separately)
         for (let i = 0; i < userMessages.length - 1; i++) {
             const msg = userMessages[i];
@@ -51,6 +54,8 @@ export async function generateResponse(
                 parts: [{ text: msg.content }],
             });
         }
+
+        console.log(`[LLM Service] 📜 Gemini history: ${geminiHistory.length} 則訊息`);
         
         // If this is the first message, prepend "立灵句" to establish the tone
         // This helps the model "enter character" - 讓模型相信它不是回答問題，而是在活著

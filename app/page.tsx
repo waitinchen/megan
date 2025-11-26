@@ -113,11 +113,19 @@ export default function Home() {
     setIsLoading(true);
 
     try {
+      // Prepare full conversation history including the new user message
+      const fullHistory = [...messages, userMessage].map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
+      console.log('[Megan] 📤 發送對話記錄:', fullHistory.length, '則訊息');
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content })),
+          messages: fullHistory,
           userIdentity: "dad", // Defaulting to 'dad' for demo purposes as per Lingya logic
         }),
       });
