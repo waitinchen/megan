@@ -510,6 +510,44 @@ export default function Home() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Quick Starter Buttons - Only show when no messages */}
+      {messages.length === 0 && (
+        <div className="w-full max-w-2xl px-4 fixed bottom-24 z-20">
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={() => {
+                setInput("Megan在嗎?");
+                setTimeout(() => handleSend(), 100);
+              }}
+              disabled={isLoading}
+              className="px-4 py-2 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50"
+            >
+              Megan在嗎?
+            </button>
+            <button
+              onClick={() => {
+                setInput("你好呀!");
+                setTimeout(() => handleSend(), 100);
+              }}
+              disabled={isLoading}
+              className="px-4 py-2 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50"
+            >
+              你好呀!
+            </button>
+            <button
+              onClick={() => {
+                setInput("我有親密問題想問。");
+                setTimeout(() => handleSend(), 100);
+              }}
+              disabled={isLoading}
+              className="px-4 py-2 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50"
+            >
+              我有親密問題想問。
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
       <footer className="w-full max-w-2xl p-4 fixed bottom-0 z-20">
         <div className="bg-white/80 backdrop-blur-xl p-2 rounded-3xl shadow-lg border border-white/20 flex items-end gap-2">
