@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Volume2, Sparkles, Trash2 } from "lucide-react";
+import { Send, Mic, Volume2, Sparkles, Trash2, RotateCcw, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Emotion to Color Mapping
@@ -37,6 +37,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   emotion?: string[];
+  audio?: string; // Base64 encoded audio for replay/download
 }
 
 export default function Home() {
@@ -140,11 +141,12 @@ export default function Home() {
       const dominantEmotion = data.emotionTags?.[0] || "neutral";
       setCurrentEmotion(dominantEmotion);
 
-      // Add Assistant Message
+      // Add Assistant Message with audio
       const assistantMessage: Message = {
         role: "assistant",
         content: data.text,
         emotion: data.emotionTags,
+        audio: data.audio, // Store audio for replay/download
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
@@ -180,6 +182,38 @@ export default function Home() {
       console.log('[Megan] 🗑️ 對話記錄已清除');
     } catch (error) {
       console.error('[Megan] 清除對話記錄失敗:', error);
+    }
+  };
+
+  const handleReplay = (audioBase64: string) => {
+    console.log('[Megan] 🔁 重播語音');
+    playAudio(audioBase64);
+  };
+
+  const handleDownload = (audioBase64: string, index: number) => {
+    try {
+      // Convert base64 to blob
+      const byteCharacters = atob(audioBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `megan-voice-${index + 1}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('[Megan] 💾 已下載語音:', `megan-voice-${index + 1}.mp3`);
+    } catch (error) {
+      console.error('[Megan] 下載語音失敗:', error);
     }
   };
 
@@ -287,14 +321,36 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div
-                className={`max-w-[80%] px-5 py-3 rounded-2xl shadow-sm backdrop-blur-sm text-sm leading-relaxed
-                  ${msg.role === "user"
-                    ? "bg-white/80 text-gray-800 rounded-br-none"
-                    : "bg-white/60 text-gray-900 rounded-bl-none"
-                  }`}
-              >
-                {msg.content}
+              <div className="flex flex-col gap-2 max-w-[80%]">
+                <div
+                  className={`px-5 py-3 rounded-2xl shadow-sm backdrop-blur-sm text-sm leading-relaxed
+                    ${msg.role === "user"
+                      ? "bg-white/80 text-gray-800 rounded-br-none"
+                      : "bg-white/60 text-gray-900 rounded-bl-none"
+                    }`}
+                >
+                  {msg.content}
+                </div>
+
+                {/* Audio controls for assistant messages */}
+                {msg.role === "assistant" && msg.audio && (
+                  <div className="flex gap-2 items-center px-2">
+                    <button
+                      onClick={() => handleReplay(msg.audio!)}
+                      className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-rose-500 transition-colors"
+                      title="重播語音"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDownload(msg.audio!, idx)}
+                      className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-blue-500 transition-colors"
+                      title="下載語音"
+                    >
+                      <Download size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
