@@ -120,33 +120,33 @@ export async function generateResponse(
         }
 
         // 5. Reduce excessive pause symbols (減少過多的停頓符號)
-        // Replace multiple "..." with single "..." or remove based on context
+        // Aggressive removal - keep minimal pauses only
         const textBeforePauseReduction = text;
 
         // Step 1: Replace multiple consecutive "..." with single "..."
         text = text.replace(/\.{3,}/g, '...');
 
-        // Step 2: Reduce frequency - keep only some pauses (approximately 20% retention)
-        const sentences = text.split(/([。！？\n])/);
-        let pauseCount = 0;
-        const maxPausesPerSentence = 1;
-
-        for (let i = 0; i < sentences.length; i++) {
-            const pausesInSentence = (sentences[i].match(/\.\.\./g) || []).length;
-
-            if (pausesInSentence > maxPausesPerSentence) {
-                // Keep only first pause, remove others
-                let count = 0;
-                sentences[i] = sentences[i].replace(/\.\.\./g, (match) => {
-                    count++;
-                    return count === 1 ? match : '，';
-                });
-            }
+        // Step 2: Aggressive pause removal - only keep 1 pause per entire response
+        const allPauses = text.match(/\.\.\./g);
+        if (allPauses && allPauses.length > 1) {
+            // Find all pause positions
+            let pauseIndex = 0;
+            text = text.replace(/\.\.\./g, () => {
+                pauseIndex++;
+                // Only keep the first pause, remove all others
+                return pauseIndex === 1 ? '...' : '';
+            });
         }
 
-        text = sentences.join('');
+        // Step 3: Clean up double commas and extra spaces caused by removal
+        text = text
+            .replace(/，{2,}/g, '，')           // Multiple commas → single comma
+            .replace(/，\s*，/g, '，')          // Comma space comma → single comma
+            .replace(/\s+/g, ' ')               // Multiple spaces → single space
+            .replace(/\s*，\s*/g, '，')         // Spaces around commas
+            .trim();
 
-        // Step 3: Clean up any remaining excessive pauses at start/end
+        // Step 4: Clean up any remaining excessive pauses at start/end
         text = text.replace(/^\.{3,}\s*/g, '').replace(/\s*\.{3,}$/g, '');
 
         if (textBeforePauseReduction !== text) {
