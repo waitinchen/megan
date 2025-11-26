@@ -86,49 +86,53 @@ export function mapEmotionTagsToV3Tags(emotionTags: string[]): string[] {
 
 /**
  * Injects V3 tags into text based on emotion tags
+ * UPDATED: Only injects if LLM already included tags, or if strong emotion is detected
+ * Aligns with "夜光系靈魂" principle: natural conversation over theatrical performance
  * @param text Original text
  * @param emotionTags Emotion tags detected
- * @returns Text with V3 tags injected at appropriate positions
+ * @returns Text with V3 tags (only if LLM included them or strong emotion detected)
  */
 export function injectV3TagsIntoText(text: string, emotionTags: string[]): string {
-    const v3Tags = mapEmotionTagsToV3Tags(emotionTags);
-    
-    // Check if text already contains V3 tags (check for common patterns)
+    // Check if text already contains V3 tags (LLM-generated)
     const v3TagPattern = /\[(whispers?|sighs?|excited|mischievously|sings?|sarcastic|exhales?|laughs?|crying|curious)\]/i;
     const hasV3Tags = v3TagPattern.test(text);
-    
-    // If text already has V3 tags, don't duplicate (but allow LLM-generated tags to pass through)
+
+    // If text already has V3 tags, respect LLM's decision
     if (hasV3Tags) {
-        console.log(`[V3 Tags] Text already contains V3 tags, using as-is: "${text}"`);
+        console.log(`[V3 Tags] ✅ LLM included V3 tags, using as-is: "${text.substring(0, 50)}..."`);
         return text;
     }
-    
-    // If no V3 tags to inject, use default "whispers" for Moon-Shadow persona
+
+    // If no emotion tags detected, DO NOT inject default tags
+    // Let the voice parameters handle subtle emotion
+    // This prevents forced theatrical performance
+    if (emotionTags.length === 0) {
+        console.log(`[V3 Tags] No emotion tags, no injection (natural delivery)`);
+        return text;
+    }
+
+    // Only inject V3 tags for STRONG emotions (not subtle ones)
+    // This reserves V3 tags for truly exceptional moments
+    const v3Tags = mapEmotionTagsToV3Tags(emotionTags);
+
     if (v3Tags.length === 0) {
-        const defaultInjected = `[whispers] ${text}`;
-        console.log(`[V3 Tags] No emotion tags detected, using default [whispers]: "${defaultInjected}"`);
-        return defaultInjected;
+        console.log(`[V3 Tags] Emotion detected but not strong enough for V3 tags`);
+        return text;
     }
-    
-    // Priority-based injection (whisper and sigh are most important for "Moon-Shadow" persona)
-    // For whisper (intimate, secretive) - highest priority
-    if (v3Tags.includes('[whispers]')) {
-        const injected = `[whispers] ${text}`;
-        console.log(`[V3 Tags] ✅ Injected [whispers]: "${injected}"`);
-        return injected;
+
+    // Only inject for very strong emotions: whisper, sigh, excited, crying
+    // Skip injection for subtle emotions like calm, thoughtful, playful
+    const strongEmotions = ['[whispers]', '[sighs]', '[excited]', '[crying]'];
+    const strongV3Tags = v3Tags.filter(tag => strongEmotions.includes(tag));
+
+    if (strongV3Tags.length === 0) {
+        console.log(`[V3 Tags] Emotion detected but not strong enough, using voice parameters only`);
+        return text;
     }
-    
-    // For sigh (sad, tender, vulnerable) - second priority
-    if (v3Tags.includes('[sighs]')) {
-        const injected = `[sighs] ${text}`;
-        console.log(`[V3 Tags] ✅ Injected [sighs]: "${injected}"`);
-        return injected;
-    }
-    
-    // For other tags, inject at the beginning
-    // Use the first (highest priority) tag
-    const primaryTag = v3Tags[0];
+
+    // Use the first strong emotion tag (highest priority)
+    const primaryTag = strongV3Tags[0];
     const injected = `${primaryTag} ${text}`;
-    console.log(`[V3 Tags] ✅ Injected ${primaryTag}: "${injected}"`);
+    console.log(`[V3 Tags] ✅ Strong emotion detected, injected ${primaryTag}`);
     return injected;
 }

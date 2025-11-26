@@ -88,9 +88,10 @@ export function inferEmotionTags(text, context = {}) {
       }
     }
   } else {
-    // No specific keyword match, default to the "Megan" vibe
-    // Calm, thoughtful, with breathy undertones
-    selectedTags = ['calm', 'breathy', 'slow'];
+    // No specific keyword match - return empty array (neutral)
+    // Let the voice use default parameters without forcing emotion tags
+    // This aligns with "夜光系靈魂" principle: natural, not theatrical
+    selectedTags = [];
   }
 
   // 限制標籤數量（最多3個）
