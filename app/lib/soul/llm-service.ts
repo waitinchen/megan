@@ -94,6 +94,19 @@ export async function generateResponse(
             text = "...";
         }
 
+        // 3. Remove parentheses and action descriptions that would be read aloud by TTS
+        // This is critical because TTS will read "(停頓)" as "括號停頓括號"
+        const originalText = text;
+        text = text
+            .replace(/[（(][^）)]*[）)]/g, '') // Remove (...) and （...）
+            .replace(/\s+/g, ' ')              // Clean up extra spaces
+            .trim();
+
+        if (originalText !== text) {
+            console.log(`[Parentheses Removed] Original: "${originalText}"`);
+            console.log(`[Parentheses Removed] Cleaned: "${text}"`);
+        }
+
         // 3. Infer Emotion Tags from the generated text
         const emotionTags = inferEmotionTags(text, { userIdentity });
 
