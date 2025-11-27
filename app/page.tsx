@@ -769,7 +769,7 @@ export default function Home() {
           </button>
         </div>
         <div className="text-center mt-2">
-          <p className="text-[10px] text-white/20">Powered by EL V3 & Lingya Soul</p>
+          <p className="text-[10px] text-slate-400">Superintelligence © 2025. All Rights Reserved.</p>
         </div>
       </footer>
 
