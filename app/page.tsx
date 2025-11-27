@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Mic, Volume2, Sparkles, Trash2, RotateCcw, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/navigation";
 
 // Emotion to Color Mapping
 const emotionColors: Record<string, string> = {
@@ -41,6 +43,8 @@ interface Message {
 }
 
 export default function Home() {
+  const supabase = createClientComponentClient();
+  const router = useRouter();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,11 +55,51 @@ export default function Home() {
   const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [nickname, setNickname] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load conversation history from localStorage on mount
+  // Check authentication and nickname on mount
   useEffect(() => {
-    setIsConnected(true);
+    async function checkAuth() {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        
+        if (!authData.user) {
+          // Not logged in, redirect to login
+          router.push('/login');
+          return;
+        }
+
+        // Check if user has nickname
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("nickname")
+          .eq("id", authData.user.id)
+          .single();
+
+        if (!profile?.nickname) {
+          // No nickname, redirect to welcome
+          router.push('/welcome');
+          return;
+        }
+
+        // User is authenticated and has nickname
+        setNickname(profile.nickname);
+        setIsCheckingAuth(false);
+        setIsConnected(true);
+      } catch (error) {
+        console.error('[Megan] 認證檢查失敗:', error);
+        router.push('/login');
+      }
+    }
+
+    checkAuth();
+  }, [supabase, router]);
+
+  // Load conversation history from localStorage on mount (only after auth check)
+  useEffect(() => {
+    if (isCheckingAuth) return;
 
     // Load saved messages
     try {
@@ -70,7 +114,7 @@ export default function Home() {
     } catch (error) {
       console.error('[Megan] 載入對話記錄失敗:', error);
     }
-  }, []);
+  }, [isCheckingAuth]);
 
   // Save conversation history to localStorage whenever messages change
   useEffect(() => {
@@ -363,6 +407,18 @@ export default function Home() {
   const bgGradient = emotionColors[currentEmotion] || emotionColors.neutral;
   const currentEmoji = emotionEmojis[currentEmotion] || "🌸";
 
+  // Show loading state while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#F3F0F5]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-rose-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">檢查登入狀態...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#F3F0F5]">
 
@@ -378,11 +434,13 @@ export default function Home() {
           </div>
 
           <div>
-            <h1 className="font-semibold text-slate-800">Megan</h1>
+            <h1 className="font-semibold text-slate-800">
+              {nickname ? `嗨，${nickname}` : "Megan"}
+            </h1>
             <div className="flex items-center gap-1.5">
               <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
               <span className="text-xs text-slate-500 font-medium">
-                {isConnected ? "在線上" : "連線中..."}
+                {isCheckingAuth ? "檢查中..." : isConnected ? "在線上" : "連線中..."}
               </span>
             </div>
           </div>
