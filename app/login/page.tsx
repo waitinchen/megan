@@ -111,7 +111,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <div className="mt-8 text-center">
-        <p className="text-xs text-slate-400">Powered by ElevenLabs V3 & Gemini 2.0 Flash</p>
+        <p className="text-xs text-slate-400">Superintelligence © 2025. All Rights Reserved.</p>
       </div>
     </div>
   );
