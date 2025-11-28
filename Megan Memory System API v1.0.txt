@@ -1,0 +1,226 @@
+openapi: 3.1.0
+info:
+  title: Megan Memory System API
+  version: 1.0.0
+  description: >
+    Tone Memory Core + User Memory + Logs + Summary
+    用於 Megan 的個人化記憶與後台管理系統。
+servers:
+  - url: https://tone-memory-core-1.waitin-chen.workers.dev
+
+paths:
+
+  ####################################################
+  # 1. Memory Core（雲端 KV 記憶 API）
+  ####################################################
+
+  /:
+    get:
+      summary: 讀取或寫入記憶（GET）
+      description: >
+        GET 模式：
+        - 只有 key → 讀取 KV
+        - key + value → 寫入 KV（純文字模式）
+      parameters:
+        - in: query
+          name: key
+          required: true
+          schema:
+            type: string
+          description: 要讀取的 Key
+        - in: query
+          name: value
+          required: false
+          schema:
+            type: string
+          description: 若有 value → 寫入 KV
+      responses:
+        "200":
+          description: 成功
+          content:
+            text/plain:
+              schema:
+                type: string
+
+    post:
+      summary: 使用 JSON 寫入記憶（POST）
+      description: >
+        POST 模式可寫入 JSON 或純文字。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, value]
+              properties:
+                key:
+                  type: string
+                value:
+                  oneOf:
+                    - type: string
+                    - type: object
+                    - type: array
+      responses:
+        "200":
+          description: 已寫入
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  method:
+                    type: string
+                  status:
+                    type: string
+                  key:
+                    type: string
+                  value:
+                    type: object
+
+  ####################################################
+  # 2. User Memory（供後台使用）
+  ####################################################
+
+  /admin/users:
+    get:
+      summary: 取得所有用戶列表
+      description: 從 DB 或 Sheet 取得所有使用者列表。
+      responses:
+        "200":
+          description: 用戶列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                    nickname:
+                      type: string
+                    lastSeen:
+                      type: string
+                    memoryCount:
+                      type: integer
+                    relationshipScore:
+                      type: string
+
+  /admin/user/{userId}/memory:
+    get:
+      summary: 取得某位用戶所有記憶（KV）
+      parameters:
+        - name: userId
+          in: path
+          required: true
+      responses:
+        "200":
+          description: 記憶內容
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    type: object
+                  preferences:
+                    type: object
+                  relationship:
+                    type: object
+                  longterm:
+                    type: object
+
+  /admin/user/{userId}/memory/update:
+    post:
+      summary: 更新某位用戶的記憶（寫回 KV）
+      parameters:
+        - name: userId
+          in: path
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, value]
+              properties:
+                key:
+                  type: string
+                value:
+                  oneOf:
+                    - type: string
+                    - type: object
+      responses:
+        "200":
+          description: 更新成功
+
+  ####################################################
+  # 3. Raw Logs（存放在 Google Sheet）
+  ####################################################
+
+  /admin/user/{userId}/logs:
+    get:
+      summary: 取得某用戶所有對話紀錄（Google Sheet）
+      parameters:
+        - in: path
+          name: userId
+          required: true
+      responses:
+        "200":
+          description: 對話紀錄
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    timestamp:
+                      type: string
+                    role:
+                      type: string
+                      enum: [user, megan]
+                    message:
+                      type: string
+
+  ####################################################
+  # 4. Daily Summary（每日精煉）
+  ####################################################
+
+  /admin/user/{userId}/summary:
+    get:
+      summary: 取得某用戶所有每日摘要
+      responses:
+        "200":
+          description: 每日摘要列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                    summary:
+                      type: string
+                    moodTrend:
+                      type: string
+
+  /admin/user/{userId}/summary/generate:
+    post:
+      summary: 產生最新摘要（會讀 Raw Logs → GPT 摘要 → 存入 Sheet + KV）
+      responses:
+        "200":
+          description: 產生成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "summary_updated"
+

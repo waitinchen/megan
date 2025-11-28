@@ -14,3 +14,4 @@ create index if not exists profiles_id_idx on profiles(id);
 -- 為 nickname 欄位建立索引（提升搜尋效能）
 create index if not exists profiles_nickname_idx on profiles(nickname);
 
+

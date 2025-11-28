@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { generateResponse } from '@/app/lib/soul/llm-service';
 import { generateSpeech } from '@/app/lib/elevenlabs-client';
+import { getUserMemories, buildMemoryContext } from '@/app/lib/memory/memory-service';
+import { createClient } from '@/app/lib/supabase/client';
 
 /**
  * Removes ElevenLabs V3 audio tags from text for display purposes
@@ -17,17 +19,37 @@ function stripAudioTags(text: string): string {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { messages, userIdentity } = body;
+        const { messages, userIdentity, userId } = body;
 
         if (!messages || !Array.isArray(messages)) {
             return NextResponse.json({ error: 'Invalid messages format' }, { status: 400 });
         }
 
-        // 1. Check if this is the first message (for "立灵句" initialization)
+        // 1. Load user memories from Cloudflare KV (if userId provided)
+        let memoryContext = '';
+        if (userId) {
+            console.log(`[Chat API] Loading memories for user: ${userId}`);
+            try {
+                const memories = await getUserMemories(userId);
+                memoryContext = buildMemoryContext(userIdentity || '你', memories);
+                console.log(`[Chat API] Memory context loaded: ${memoryContext.length} chars`);
+            } catch (memoryError) {
+                console.error('[Chat API] Failed to load memories:', memoryError);
+                // Continue without memories if loading fails
+            }
+        }
+
+        // 2. Check if this is the first message (for "立灵句" initialization)
         const isFirstMessage = messages.length === 1 && messages[0].role === 'user';
-        
-        // 2. Get Text and Emotion from LLM (The "Soul")
-        const { text, emotionTags } = await generateResponse(messages, userIdentity, isFirstMessage);
+
+        // 3. Get Text and Emotion from LLM (The "Soul")
+        // Pass memory context to LLM
+        const { text, emotionTags } = await generateResponse(
+            messages,
+            userIdentity,
+            isFirstMessage,
+            memoryContext
+        );
 
         // 2. Generate Speech using ElevenLabs (The "Voice")
         // We pass the emotion tags to adapt the voice parameters

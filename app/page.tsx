@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Volume2, Sparkles, Trash2, RotateCcw, Download } from "lucide-react";
+import { Send, Mic, Volume2, Sparkles, Trash2, RotateCcw, Download, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
@@ -56,8 +56,13 @@ export default function Home() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [favoritingIndex, setFavoritingIndex] = useState<number | null>(null);
+  const [favoriteMessage, setFavoriteMessage] = useState<string | null>(null);
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Check authentication and nickname on mount
   useEffect(() => {
@@ -86,6 +91,7 @@ export default function Home() {
 
         // User is authenticated and has nickname
         setNickname(profile.nickname);
+        setUserId(authData.user.id);
         setIsCheckingAuth(false);
         setIsConnected(true);
       } catch (error) {
@@ -115,6 +121,32 @@ export default function Home() {
       console.error('[Megan] 載入對話記錄失敗:', error);
     }
   }, [isCheckingAuth]);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showUserMenu]);
+
+  // Auto-hide favorite success message after 3 seconds
+  useEffect(() => {
+    if (favoriteMessage) {
+      const timer = setTimeout(() => {
+        setFavoriteMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [favoriteMessage]);
 
   // Save conversation history to localStorage whenever messages change
   useEffect(() => {
@@ -180,6 +212,7 @@ export default function Home() {
         body: JSON.stringify({
           messages: fullHistory,
           userIdentity: nickname || "你", // Use actual user nickname
+          userId: userId, // Pass user ID for memory loading
         }),
       });
 
@@ -343,6 +376,7 @@ export default function Home() {
             body: JSON.stringify({
               messages: fullHistory,
               userIdentity: nickname || "你",
+              userId: userId, // Pass user ID for memory loading
             }),
           });
 
@@ -401,6 +435,55 @@ export default function Home() {
       console.log('[Megan] 🎤 語音識別結束');
     };
 
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('[Megan] 登出失敗:', error);
+    }
+  };
+
+  // Handle favorite message
+  const handleFavorite = async (message: Message, index: number) => {
+    if (!userId) {
+      setFavoriteMessage('請先登入');
+      return;
+    }
+
+    if (message.role !== 'assistant') {
+      return; // Only allow favoriting Megan's messages
+    }
+
+    setFavoritingIndex(index);
+
+    try {
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: message.audio ? 'audio' : 'text',
+          content: message.content,
+          audio_url: message.audio ? `data:audio/mpeg;base64,${message.audio}` : null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setFavoriteMessage('✨ 已收藏到個人中心');
+      } else {
+        setFavoriteMessage(`收藏失敗: ${data.error}`);
+      }
+    } catch (error: any) {
+      console.error('[Favorite] 收藏失敗:', error);
+      setFavoriteMessage('收藏失敗，請稍後再試');
+    } finally {
+      setFavoritingIndex(null);
+    }
+  };
+
     recognition.start();
   };
 
@@ -444,6 +527,76 @@ export default function Home() {
               </span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* User Menu - Fixed Position (Right Top) */}
+      {!isAvatarZoomed && !isCheckingAuth && (
+        <div className="fixed top-6 right-6 z-50" ref={userMenuRef}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 bg-white/80 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-lg border border-white/20 hover:bg-white transition-all"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-200 to-purple-200 flex items-center justify-center text-sm font-semibold text-slate-700">
+              {nickname?.charAt(0) || '?'}
+            </div>
+            <span className="text-sm font-medium text-slate-800">{nickname}</span>
+            <svg
+              className={`w-4 h-4 text-slate-600 transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 py-2 overflow-hidden">
+              <a
+                href="/dashboard/profile"
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                <span className="text-lg">👤</span>
+                <span className="text-sm font-medium">個人資料</span>
+              </a>
+
+              <a
+                href="/dashboard/memory"
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                <span className="text-lg">🧠</span>
+                <span className="text-sm font-medium">默契記憶</span>
+              </a>
+
+              <a
+                href="/dashboard/favorites"
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                <span className="text-lg">⭐</span>
+                <span className="text-sm font-medium">收藏對話</span>
+              </a>
+
+              <a
+                href="/dashboard/bindings"
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              >
+                <span className="text-lg">🔗</span>
+                <span className="text-sm font-medium">帳號綁定</span>
+              </a>
+
+              <div className="border-t border-slate-200 my-2"></div>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-all w-full text-left"
+              >
+                <span className="text-lg">🚪</span>
+                <span className="text-sm font-medium">登出</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -533,23 +686,42 @@ export default function Home() {
                   {msg.content}
                 </div>
 
-                {/* Audio controls for assistant messages */}
-                {msg.role === "assistant" && msg.audio && (
+                {/* Controls for assistant messages */}
+                {msg.role === "assistant" && (
                   <div className="flex gap-2 items-center px-2">
+                    {/* Favorite button */}
                     <button
-                      onClick={() => handleReplay(msg.audio!)}
-                      className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-rose-500 transition-colors"
-                      title="重播語音"
+                      onClick={() => handleFavorite(msg, idx)}
+                      disabled={favoritingIndex === idx}
+                      className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-amber-500 transition-colors disabled:opacity-50"
+                      title="收藏"
                     >
-                      <RotateCcw size={14} />
+                      {favoritingIndex === idx ? (
+                        <span className="animate-spin">⭐</span>
+                      ) : (
+                        <Star size={14} />
+                      )}
                     </button>
-                    <button
-                      onClick={() => handleDownload(msg.audio!, idx)}
-                      className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-blue-500 transition-colors"
-                      title="下載語音"
-                    >
-                      <Download size={14} />
-                    </button>
+
+                    {/* Audio controls */}
+                    {msg.audio && (
+                      <>
+                        <button
+                          onClick={() => handleReplay(msg.audio!)}
+                          className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-rose-500 transition-colors"
+                          title="重播語音"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDownload(msg.audio!, idx)}
+                          className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-blue-500 transition-colors"
+                          title="下載語音"
+                        >
+                          <Download size={14} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -567,6 +739,21 @@ export default function Home() {
         </AnimatePresence>
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Favorite Success Message - Floating Toast */}
+      {favoriteMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50"
+        >
+          <div className="bg-gradient-to-r from-amber-500 to-rose-500 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-white/20 backdrop-blur-xl flex items-center gap-2">
+            <span className="text-lg">⭐</span>
+            <span className="font-medium">{favoriteMessage}</span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Quick Starter Buttons - Only show when no messages */}
       {messages.length === 0 && (
@@ -588,6 +775,7 @@ export default function Home() {
                     body: JSON.stringify({
                       messages: [{ role: "user", content: message }],
                       userIdentity: nickname || "你",
+                      userId: userId, // Pass user ID for memory loading
                     }),
                   });
 
@@ -634,6 +822,7 @@ export default function Home() {
                     body: JSON.stringify({
                       messages: [{ role: "user", content: message }],
                       userIdentity: nickname || "你",
+                      userId: userId, // Pass user ID for memory loading
                     }),
                   });
 

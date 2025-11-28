@@ -23,11 +23,14 @@ export interface LLMResponse {
  * Generates a response from the LLM and infers emotion tags.
  * @param history Conversation history
  * @param userIdentity Optional identity of the user (e.g., 'dad')
+ * @param isFirstMessage Whether this is the first message in the conversation
+ * @param memoryContext Optional memory context to inject into the system prompt
  */
 export async function generateResponse(
     history: ChatMessage[],
     userIdentity: string = 'other',
-    isFirstMessage: boolean = false
+    isFirstMessage: boolean = false,
+    memoryContext: string = ''
 ): Promise<LLMResponse> {
     try {
         // 1. Prepare history for Gemini
@@ -36,9 +39,24 @@ export async function generateResponse(
 
         console.log(`[LLM Service] 📥 收到對話記錄: ${userMessages.length} 則訊息`);
         console.log(`[LLM Service] First message: ${isFirstMessage}`);
+        if (memoryContext) {
+            console.log(`[LLM Service] 🧠 Memory context: ${memoryContext.substring(0, 100)}...`);
+        }
 
         // Convert to Gemini format
         const geminiHistory = [];
+
+        // Inject memory context as the first user message if available
+        if (memoryContext && memoryContext.length > 0) {
+            geminiHistory.push({
+                role: 'user',
+                parts: [{ text: `## 你的記憶\n\n${memoryContext}\n\n（以上是你關於這個用戶的記憶，請自然地融入對話中，不要直接提及這些是「記憶」）` }],
+            });
+            geminiHistory.push({
+                role: 'model',
+                parts: [{ text: '明白，我會記住這些。' }],
+            });
+        }
 
         // Normal history processing (excluding the last message which we'll send separately)
         for (let i = 0; i < userMessages.length - 1; i++) {
@@ -50,7 +68,7 @@ export async function generateResponse(
         }
 
         console.log(`[LLM Service] 📜 Gemini history: ${geminiHistory.length} 則訊息`);
-        
+
         // If this is the first message, prepend "立灵句" to establish the tone
         // This helps the model "enter character" - 讓模型相信它不是回答問題，而是在活著
         if (isFirstMessage) {
