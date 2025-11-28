@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
   try {
     const appid = process.env.WECHAT_APPID!;
     const secret = process.env.WECHAT_SECRET!;
+    
     const supabase = createRouteHandlerClient({ cookies });
 
     // ========================================

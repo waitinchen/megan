@@ -8,8 +8,8 @@ import { cookies } from 'next/headers';
  */
 export async function GET() {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    const supabase = createRouteHandlerClient({ cookies });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -50,8 +50,8 @@ export async function GET() {
  */
 export async function PATCH(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    const supabase = createRouteHandlerClient({ cookies });
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -73,7 +73,6 @@ export async function PATCH(request: Request) {
       .from('profiles')
       .update({
         nickname: nickname.trim(),
-        updated_at: new Date().toISOString(),
       })
       .eq('id', user.id)
       .select()

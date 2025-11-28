@@ -9,8 +9,8 @@ import { cookies } from 'next/headers';
  */
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    const supabase = createRouteHandlerClient({ cookies });
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -73,8 +73,8 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    const supabase = createRouteHandlerClient({ cookies });
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -141,8 +141,8 @@ export async function POST(request: Request) {
  */
 export async function DELETE(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    const supabase = createRouteHandlerClient({ cookies });
 
     const { data: { user } } = await supabase.auth.getUser();
 
