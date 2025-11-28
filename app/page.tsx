@@ -736,7 +736,7 @@ function HomePage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs mt-1.5">
-                  <span className="text-slate-600">AI 系統</span>
+                  <span className="text-slate-600">智能系統</span>
                   <span className={`font-medium ${apiStatus.llm === 'ok' ? 'text-emerald-600' : apiStatus.llm === 'error' ? 'text-red-600' : 'text-amber-600'}`}>
                     {apiStatus.llm === 'ok' ? '✓ 正常' : apiStatus.llm === 'error' ? '✗ 異常' : '⋯ 檢查中'}
                   </span>
@@ -825,27 +825,6 @@ function HomePage() {
               <Trash2 size={16} />
             </button>
           )}
-          {/* API Status Indicator */}
-          <div className="flex gap-2 text-xs font-mono">
-            <div className="flex items-center gap-1">
-              <span className="text-slate-600">EL:</span>
-              <span className={`px-1.5 py-0.5 rounded ${apiStatus.elevenlabs === 'ok' ? 'bg-emerald-100 text-emerald-700' :
-                apiStatus.elevenlabs === 'checking' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-red-100 text-red-700'
-                }`}>
-                {apiStatus.elevenlabs === 'ok' ? 'OK' : apiStatus.elevenlabs === 'checking' ? '...' : 'ERR'}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-slate-600">LLM:</span>
-              <span className={`px-1.5 py-0.5 rounded ${apiStatus.llm === 'ok' ? 'bg-emerald-100 text-emerald-700' :
-                apiStatus.llm === 'checking' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-red-100 text-red-700'
-                }`}>
-                {apiStatus.llm === 'ok' ? 'OK' : apiStatus.llm === 'checking' ? '...' : 'ERR'}
-              </span>
-            </div>
-          </div>
           {/* Debug Tags */}
           <div className="hidden sm:flex gap-1">
             {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].emotion?.map(tag => (
