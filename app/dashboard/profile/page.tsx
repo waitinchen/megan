@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const supabase = createClientComponentClient();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [userId, setUserId] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [nickname, setNickname] = useState<string>('');
   const [newNickname, setNewNickname] = useState<string>('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [provider, setProvider] = useState<string>('');
   const [createdAt, setCreatedAt] = useState<string>('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -30,13 +34,14 @@ export default function ProfilePage() {
         // Get profile
         const { data: profile } = await supabase
           .from('profiles')
-          .select('nickname, created_at')
+          .select('nickname, avatar_url, created_at')
           .eq('id', authData.user.id)
           .single();
 
         if (profile) {
           setNickname(profile.nickname);
           setNewNickname(profile.nickname);
+          setAvatarUrl(profile.avatar_url);
         }
 
         setIsLoading(false);
@@ -67,12 +72,98 @@ export default function ProfilePage() {
       if (error) throw error;
 
       setNickname(newNickname.trim());
-      setMessage({ type: 'success', text: '暱稱更新成功！' });
+      setMessage({ type: 'success', text: '暱稱更新成功！Megan 會立即使用新暱稱稱呼你 ✨' });
+
+      // 觸發頁面刷新，讓主頁面重新載入暱稱
+      setTimeout(() => {
+        router.refresh();
+        // 通知主頁面更新（透過 storage event）
+        window.localStorage.setItem('nickname-updated', Date.now().toString());
+      }, 1000);
     } catch (error: any) {
       console.error('[Profile] 更新失敗:', error);
       setMessage({ type: 'error', text: `更新失敗: ${error.message}` });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 驗證文件類型
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: '請選擇圖片文件' });
+      return;
+    }
+
+    // 驗證文件大小 (最大 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: '圖片大小不能超過 5MB' });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setMessage(null);
+
+    try {
+      // 生成唯一文件名
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+
+      console.log('[Avatar] 上傳文件:', fileName);
+
+      // 上傳到 Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('[Avatar] 上傳錯誤:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('[Avatar] 上傳成功:', uploadData);
+
+      // 獲取公開 URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const publicUrl = urlData.publicUrl;
+      console.log('[Avatar] 公開 URL:', publicUrl);
+
+      // 更新資料庫
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('[Avatar] 更新資料庫錯誤:', updateError);
+        throw updateError;
+      }
+
+      setAvatarUrl(publicUrl);
+      setMessage({ type: 'success', text: '頭像上傳成功！✨' });
+
+      // 通知主頁面更新
+      setTimeout(() => {
+        router.refresh();
+        window.localStorage.setItem('avatar-updated', Date.now().toString());
+      }, 1000);
+    } catch (error: any) {
+      console.error('[Avatar] 上傳失敗:', error);
+      setMessage({
+        type: 'error',
+        text: `上傳失敗: ${error.message || '未知錯誤'}`
+      });
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -171,23 +262,50 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Avatar Upload (Placeholder) */}
+      {/* Avatar Upload */}
       <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-8">
         <h2 className="text-2xl font-bold text-slate-800 mb-6">大頭貼</h2>
 
         <div className="flex items-center gap-6">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-rose-200 to-purple-200 flex items-center justify-center text-4xl">
-            {nickname.charAt(0)}
+          <div className="relative">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="頭像"
+                className="w-24 h-24 rounded-full object-cover border-2 border-rose-200"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-rose-200 to-purple-200 flex items-center justify-center text-4xl">
+                {nickname.charAt(0)}
+              </div>
+            )}
           </div>
 
           <div>
-            <p className="text-slate-600 mb-3">目前使用預設頭像</p>
-            <button
-              disabled
-              className="px-4 py-2 bg-slate-200 text-slate-500 rounded-lg text-sm cursor-not-allowed"
+            <p className="text-slate-600 mb-3">
+              {avatarUrl ? '點擊更換頭像' : '上傳你的頭像'}
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              disabled={isUploadingAvatar}
+              className="hidden"
+              id="avatar-upload"
+            />
+            <label
+              htmlFor="avatar-upload"
+              className={`px-4 py-2 rounded-lg text-sm inline-block transition-all ${
+                isUploadingAvatar
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-rose-500 hover:bg-rose-600 text-white cursor-pointer'
+              }`}
             >
-              上傳頭像（開發中）
-            </button>
+              {isUploadingAvatar ? '上傳中...' : '選擇圖片'}
+            </label>
+            <p className="text-xs text-slate-500 mt-2">
+              支持 JPG、PNG、GIF 格式，最大 5MB
+            </p>
           </div>
         </div>
       </div>
