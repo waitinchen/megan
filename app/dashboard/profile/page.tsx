@@ -88,6 +88,73 @@ export default function ProfilePage() {
     }
   };
 
+  // 圖片壓縮函數
+  const compressImage = (file: File, maxSizeMB: number = 5): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // 計算壓縮比例（保持最大邊 2048px）
+          const maxDimension = 2048;
+          if (width > height && width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('無法創建 canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // 嘗試不同質量直到文件大小小於 maxSizeMB
+          let quality = 0.9;
+          const tryCompress = () => {
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error('壓縮失敗'));
+                  return;
+                }
+
+                const sizeMB = blob.size / 1024 / 1024;
+                console.log(`[Avatar] 壓縮質量 ${quality}: ${sizeMB.toFixed(2)}MB`);
+
+                if (sizeMB <= maxSizeMB || quality <= 0.1) {
+                  resolve(blob);
+                } else {
+                  quality -= 0.1;
+                  tryCompress();
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          };
+
+          tryCompress();
+        };
+        img.onerror = () => reject(new Error('圖片載入失敗'));
+      };
+      reader.onerror = () => reject(new Error('文件讀取失敗'));
+    });
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -98,28 +165,37 @@ export default function ProfilePage() {
       return;
     }
 
-    // 驗證文件大小 (最大 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage({ type: 'error', text: '圖片大小不能超過 5MB' });
-      return;
-    }
-
     setIsUploadingAvatar(true);
     setMessage(null);
 
     try {
+      let fileToUpload: Blob = file;
+      const originalSizeMB = file.size / 1024 / 1024;
+
+      // 如果文件大於 5MB，自動壓縮
+      if (file.size > 5 * 1024 * 1024) {
+        console.log(`[Avatar] 原始大小: ${originalSizeMB.toFixed(2)}MB，開始壓縮...`);
+        setMessage({ type: 'success', text: `圖片較大 (${originalSizeMB.toFixed(1)}MB)，正在壓縮...` });
+
+        fileToUpload = await compressImage(file, 4.5); // 壓縮到 4.5MB 以下留點餘裕
+
+        const compressedSizeMB = fileToUpload.size / 1024 / 1024;
+        console.log(`[Avatar] 壓縮後: ${compressedSizeMB.toFixed(2)}MB`);
+        setMessage({ type: 'success', text: `壓縮完成 (${originalSizeMB.toFixed(1)}MB → ${compressedSizeMB.toFixed(1)}MB)，上傳中...` });
+      }
+
       // 生成唯一文件名
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const fileName = `${userId}-${Date.now()}.jpg`; // 統一使用 jpg 格式
 
       console.log('[Avatar] 上傳文件:', fileName);
 
       // 上傳到 Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, {
+        .upload(fileName, fileToUpload, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          contentType: 'image/jpeg'
         });
 
       if (uploadError) {
