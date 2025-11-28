@@ -1,0 +1,12 @@
+請在瀏覽器中訪問以下 URL 來允許推送：
+
+1. Google OAuth Client ID:
+https://github.com/waitinchen/megan/security/secret-scanning/unblock-secret/365pCRNAls9mE3p1AwpmoZzS5Kd
+
+2. Google OAuth Client Secret (第一個):
+https://github.com/waitinchen/megan/security/secret-scanning/unblock-secret/365pCOkrtXe4HiYpwnHIqgbvvMQ
+
+3. Google OAuth Client Secret (第二個):
+https://github.com/waitinchen/megan/security/secret-scanning/unblock-secret/365pCS5TnB4cWs7ku8n3GHzKyp0
+
+訪問後點擊 "Allow this secret"，然後重新執行 git push。

@@ -6,7 +6,8 @@
       "Bash(git push)",
       "Bash(git commit:*)",
       "Bash(cat:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

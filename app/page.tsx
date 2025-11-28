@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { Send, Mic, Volume2, Sparkles, Trash2, RotateCcw, Download, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -42,7 +42,7 @@ interface Message {
   audio?: string; // Base64 encoded audio for replay/download
 }
 
-export default function Home() {
+function HomePage() {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -551,6 +551,9 @@ export default function Home() {
       console.log('[Megan] 🎤 語音識別結束');
     };
 
+    recognition.start();
+  };
+
   // Handle logout
   const handleLogout = async () => {
     try {
@@ -643,9 +646,6 @@ export default function Home() {
     } finally {
       setFavoritingIndex(null);
     }
-  };
-
-    recognition.start();
   };
 
   const bgGradient = emotionColors[currentEmotion] || emotionColors.neutral;
@@ -1159,5 +1159,20 @@ export default function Home() {
         </>
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">💖</div>
+          <p className="text-slate-600">載入中...</p>
+        </div>
+      </div>
+    }>
+      <HomePage />
+    </Suspense>
   );
 }
