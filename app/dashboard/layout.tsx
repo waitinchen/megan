@@ -62,6 +62,7 @@ export default function DashboardLayout({
     { href: '/dashboard/profile', label: '個人資料', icon: '👤' },
     { href: '/dashboard/bindings', label: '帳號綁定', icon: '🔗' },
     { href: '/dashboard/memory', label: '默契記憶', icon: '🧠' },
+    { href: '/dashboard/history', label: '對話歷史', icon: '💬' },
     { href: '/dashboard/favorites', label: '收藏對話', icon: '⭐' },
   ];
 

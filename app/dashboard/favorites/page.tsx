@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Search, ArrowUpDown } from 'lucide-react';
 
 interface Favorite {
   id: string;
@@ -17,10 +18,21 @@ export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [filter, setFilter] = useState<'all' | 'text' | 'audio'>('all');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // desc = 最新在前, asc = 最舊在前
 
   useEffect(() => {
     loadFavorites();
-  }, []);
+  }, [sortOrder]);
+
+  // 當搜尋關鍵字改變時，延遲搜尋（防抖）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadFavorites();
+    }, 500); // 500ms 延遲
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   async function loadFavorites() {
     try {
@@ -28,15 +40,23 @@ export default function FavoritesPage() {
 
       if (!authData.user) return;
 
-      const { data, error } = await supabase
-        .from('favorites')
-        .select('*')
-        .eq('user_id', authData.user.id)
-        .order('created_at', { ascending: false });
+      setIsLoading(true);
 
-      if (error) throw error;
+      // 構建 API URL
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
+      params.append('sort', sortOrder);
 
-      setFavorites(data || []);
+      const response = await fetch(`/api/favorites?${params.toString()}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || '載入失敗');
+      }
+
+      setFavorites(result.favorites || []);
       setIsLoading(false);
     } catch (error: any) {
       console.error('[Favorites] 載入失敗:', error);
@@ -58,9 +78,12 @@ export default function FavoritesPage() {
 
       setFavorites(prev => prev.filter(fav => fav.id !== id));
       setMessage({ type: 'success', text: '已刪除收藏' });
+      // 3 秒後清除訊息
+      setTimeout(() => setMessage(null), 3000);
     } catch (error: any) {
       console.error('[Favorites] 刪除失敗:', error);
       setMessage({ type: 'error', text: `刪除失敗: ${error.message}` });
+      setTimeout(() => setMessage(null), 3000);
     }
   }
 
@@ -93,37 +116,61 @@ export default function FavoritesPage() {
           </div>
         </div>
 
-        {/* Filter */}
-        <div className="flex gap-2">
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+          <input
+            type="text"
+            placeholder="搜尋收藏內容..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+          />
+        </div>
+
+        {/* Filter & Sort */}
+        <div className="flex gap-2 items-center justify-between flex-wrap">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                filter === 'all'
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              全部 ({favorites.length})
+            </button>
+            <button
+              onClick={() => setFilter('text')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                filter === 'text'
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              文字 ({favorites.filter(f => f.type === 'text').length})
+            </button>
+            <button
+              onClick={() => setFilter('audio')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                filter === 'audio'
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              語音 ({favorites.filter(f => f.type === 'audio').length})
+            </button>
+          </div>
+
+          {/* Sort Toggle */}
           <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              filter === 'all'
-                ? 'bg-rose-500 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all font-medium"
+            title={sortOrder === 'desc' ? '切換為最舊優先' : '切換為最新優先'}
           >
-            全部 ({favorites.length})
-          </button>
-          <button
-            onClick={() => setFilter('text')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              filter === 'text'
-                ? 'bg-rose-500 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            文字 ({favorites.filter(f => f.type === 'text').length})
-          </button>
-          <button
-            onClick={() => setFilter('audio')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              filter === 'audio'
-                ? 'bg-rose-500 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            語音 ({favorites.filter(f => f.type === 'audio').length})
+            <ArrowUpDown size={16} />
+            <span>{sortOrder === 'desc' ? '最新' : '最舊'}</span>
           </button>
         </div>
       </div>

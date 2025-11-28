@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { LoginWithWeChatButton } from '@/components/auth/LoginWithWeChat';
 
 interface Provider {
   id: string;
@@ -186,12 +187,19 @@ export default function BindingsPage() {
                     解除綁定
                   </button>
                 ) : (
-                  <button
-                    onClick={() => handleBind(provider.id)}
-                    className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-medium transition-all"
-                  >
-                    綁定
-                  </button>
+                  provider.id === 'wechat' ? (
+                    <LoginWithWeChatButton 
+                      variant="compact" 
+                      text="綁定"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => handleBind(provider.id)}
+                      className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-medium transition-all"
+                    >
+                      綁定
+                    </button>
+                  )
                 )}
               </div>
             </div>

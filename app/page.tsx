@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Mic, Volume2, Sparkles, Trash2, RotateCcw, Download, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Emotion to Color Mapping
 const emotionColors: Record<string, string> = {
@@ -45,6 +45,7 @@ interface Message {
 export default function Home() {
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,8 +62,11 @@ export default function Home() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [favoritingIndex, setFavoritingIndex] = useState<number | null>(null);
   const [favoriteMessage, setFavoriteMessage] = useState<string | null>(null);
+  const [favoritedMessages, setFavoritedMessages] = useState<Set<string>>(new Set()); // 儲存已收藏的內容
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null); // 當前對話 ID
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const saveConversationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check authentication and nickname on mount
   useEffect(() => {
@@ -103,24 +107,116 @@ export default function Home() {
     checkAuth();
   }, [supabase, router]);
 
-  // Load conversation history from localStorage on mount (only after auth check)
+  // Load conversation from URL parameter or localStorage
   useEffect(() => {
-    if (isCheckingAuth) return;
+    if (isCheckingAuth || !userId || !searchParams) return;
 
-    // Load saved messages
+    const conversationId = searchParams.get('conversation');
+
+    // 如果有對話 ID，從資料庫載入
+    if (conversationId) {
+      loadConversationFromDB(conversationId);
+      return;
+    }
+
+    // 否則嘗試從 localStorage 載入
     try {
       const savedMessages = localStorage.getItem('megan_conversation_history');
       if (savedMessages) {
         const parsed = JSON.parse(savedMessages);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setMessages(parsed);
-          console.log('[Megan] 載入對話記錄:', parsed.length, '則訊息');
+          console.log('[Megan] 載入本地對話記錄:', parsed.length, '則訊息');
+          // 創建新對話並保存到資料庫
+          saveConversationToDB(parsed);
         }
       }
     } catch (error) {
       console.error('[Megan] 載入對話記錄失敗:', error);
     }
-  }, [isCheckingAuth]);
+  }, [isCheckingAuth, userId, searchParams]);
+
+  // Load conversation from database
+  async function loadConversationFromDB(conversationId: string) {
+    try {
+      const response = await fetch(`/api/conversations?id=${conversationId}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || '載入對話失敗');
+      }
+
+      const conversation = result.conversation;
+      if (conversation && conversation.messages) {
+        // 轉換訊息格式
+        const formattedMessages: Message[] = conversation.messages.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+          emotion: msg.emotion,
+          audio: msg.audio_url || undefined,
+        }));
+
+        setMessages(formattedMessages);
+        setCurrentConversationId(conversationId);
+        console.log('[Megan] 載入對話:', conversationId, formattedMessages.length, '則訊息');
+
+        // 清除 localStorage 中的舊記錄
+        localStorage.removeItem('megan_conversation_history');
+      }
+    } catch (error: any) {
+      console.error('[Megan] 載入對話失敗:', error);
+      router.push('/'); // 如果載入失敗，返回主頁
+    }
+  }
+
+  // Save conversation to database
+  async function saveConversationToDB(msgs?: Message[]) {
+    if (!userId) return;
+
+    const messagesToSave = msgs || messages;
+    if (messagesToSave.length === 0) return;
+
+    // 清除之前的保存計時器
+    if (saveConversationTimeoutRef.current) {
+      clearTimeout(saveConversationTimeoutRef.current);
+    }
+
+    // 延遲保存（防抖，等待用戶停止輸入）
+    saveConversationTimeoutRef.current = setTimeout(async () => {
+      try {
+        const messagesForDB = messagesToSave.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          emotion: msg.emotion || null,
+          audio: msg.audio || null,
+        }));
+
+        const response = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId: currentConversationId,
+            messages: messagesForDB,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.conversation) {
+          if (!currentConversationId) {
+            setCurrentConversationId(result.conversation.id);
+            // 更新 URL（不刷新頁面）
+            router.replace(`/?conversation=${result.conversation.id}`, { scroll: false });
+          }
+          console.log('[Megan] 💾 對話已保存到資料庫');
+        } else {
+          console.error('[Megan] 保存對話失敗:', result.error);
+        }
+      } catch (error: any) {
+        console.error('[Megan] 保存對話失敗:', error);
+      }
+    }, 2000); // 2 秒延遲
+  }
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -148,17 +244,22 @@ export default function Home() {
     }
   }, [favoriteMessage]);
 
-  // Save conversation history to localStorage whenever messages change
+  // Save conversation history to localStorage and database whenever messages change
   useEffect(() => {
     if (messages.length > 0) {
       try {
         localStorage.setItem('megan_conversation_history', JSON.stringify(messages));
-        console.log('[Megan] 💾 已儲存對話記錄:', messages.length, '則訊息');
+        console.log('[Megan] 💾 已儲存對話記錄到本地:', messages.length, '則訊息');
       } catch (error) {
         console.error('[Megan] 儲存對話記錄失敗:', error);
       }
+
+      // 保存到資料庫（如果已登入）
+      if (userId && !isCheckingAuth) {
+        saveConversationToDB();
+      }
     }
-  }, [messages]);
+  }, [messages, userId, isCheckingAuth]);
 
   // Check API health status
   useEffect(() => {
@@ -240,6 +341,11 @@ export default function Home() {
         playAudio(data.audio);
       }
 
+      // 如果這是第一條訊息，創建新對話
+      if (messages.length === 0 && !currentConversationId) {
+        // 對話會在 messages 更新後自動保存
+      }
+
     } catch (error) {
       console.error("Error:", error);
       setMessages((prev) => [...prev, { role: "assistant", content: "嗯... 好像有點問題... (系統錯誤)" }]);
@@ -259,11 +365,21 @@ export default function Home() {
     audio.onended = () => setIsPlaying(false);
   };
 
-  const handleClearHistory = () => {
+  const handleClearHistory = async () => {
     try {
       localStorage.removeItem('megan_conversation_history');
       setMessages([]);
+      setCurrentConversationId(null);
       setShowClearConfirm(false);
+      
+      // 清除 URL 參數
+      router.replace('/', { scroll: false });
+
+      // 如果當前對話存在，可以選擇刪除它（可選）
+      // if (currentConversationId) {
+      //   await fetch(`/api/conversations?id=${currentConversationId}`, { method: 'DELETE' });
+      // }
+
       console.log('[Megan] 🗑️ 對話記錄已清除');
     } catch (error) {
       console.error('[Megan] 清除對話記錄失敗:', error);
@@ -445,6 +561,39 @@ export default function Home() {
     }
   };
 
+  // 檢查訊息是否已收藏
+  const checkIfFavorited = async (content: string) => {
+    if (!userId || !content) return false;
+    try {
+      const response = await fetch(`/api/favorites?check_content=${encodeURIComponent(content)}`);
+      const data = await response.json();
+      return data.isFavorited || false;
+    } catch (error) {
+      console.error('[Favorite] 檢查失敗:', error);
+      return false;
+    }
+  };
+
+  // 載入已收藏的訊息列表
+  useEffect(() => {
+    async function loadFavoritedMessages() {
+      if (!userId) return;
+      try {
+        const response = await fetch('/api/favorites');
+        const data = await response.json();
+        if (data.favorites && Array.isArray(data.favorites)) {
+          const favoritedContents = new Set(data.favorites.map((f: any) => f.content));
+          setFavoritedMessages(favoritedContents);
+        }
+      } catch (error) {
+        console.error('[Favorite] 載入已收藏列表失敗:', error);
+      }
+    }
+    if (!isCheckingAuth) {
+      loadFavoritedMessages();
+    }
+  }, [userId, isCheckingAuth]);
+
   // Handle favorite message
   const handleFavorite = async (message: Message, index: number) => {
     if (!userId) {
@@ -454,6 +603,12 @@ export default function Home() {
 
     if (message.role !== 'assistant') {
       return; // Only allow favoriting Megan's messages
+    }
+
+    // 檢查是否已收藏
+    if (favoritedMessages.has(message.content)) {
+      setFavoriteMessage('此訊息已收藏過');
+      return;
     }
 
     setFavoritingIndex(index);
@@ -473,6 +628,12 @@ export default function Home() {
 
       if (response.ok) {
         setFavoriteMessage('✨ 已收藏到個人中心');
+        // 更新已收藏列表
+        setFavoritedMessages(prev => new Set(prev).add(message.content));
+      } else if (response.status === 409) {
+        // 409 Conflict - 已收藏過
+        setFavoriteMessage('此訊息已收藏過');
+        setFavoritedMessages(prev => new Set(prev).add(message.content));
       } else {
         setFavoriteMessage(`收藏失敗: ${data.error}`);
       }
@@ -693,13 +854,17 @@ export default function Home() {
                     <button
                       onClick={() => handleFavorite(msg, idx)}
                       disabled={favoritingIndex === idx}
-                      className="p-1.5 rounded-lg hover:bg-white/60 text-slate-500 hover:text-amber-500 transition-colors disabled:opacity-50"
-                      title="收藏"
+                      className={`p-1.5 rounded-lg hover:bg-white/60 transition-colors disabled:opacity-50 ${
+                        favoritedMessages.has(msg.content)
+                          ? 'text-amber-500'
+                          : 'text-slate-500 hover:text-amber-500'
+                      }`}
+                      title={favoritedMessages.has(msg.content) ? '已收藏' : '收藏'}
                     >
                       {favoritingIndex === idx ? (
                         <span className="animate-spin">⭐</span>
                       ) : (
-                        <Star size={14} />
+                        <Star size={14} fill={favoritedMessages.has(msg.content) ? 'currentColor' : 'none'} />
                       )}
                     </button>
 
