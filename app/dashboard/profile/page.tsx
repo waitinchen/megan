@@ -310,7 +310,7 @@ export default function ProfilePage() {
                 type="text"
                 value={newNickname}
                 onChange={(e) => setNewNickname(e.target.value)}
-                className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all"
+                className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 transition-all text-slate-700 placeholder:text-slate-400"
                 placeholder="輸入你的暱稱"
               />
               <button
