@@ -66,7 +66,7 @@ export default function ProfilePage() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ nickname: newNickname.trim(), updated_at: new Date().toISOString() })
+        .update({ nickname: newNickname.trim() })
         .eq('id', userId);
 
       if (error) throw error;
@@ -140,7 +140,7 @@ export default function ProfilePage() {
       // 更新資料庫
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+        .update({ avatar_url: publicUrl })
         .eq('id', userId);
 
       if (updateError) {
