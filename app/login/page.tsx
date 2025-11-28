@@ -28,15 +28,24 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/welcome`,
-      },
     });
 
     if (error) {
       console.error("Google Login Error:", error);
       setLoading(false);
-      alert('登入失敗，請稍後再試');
+      
+      // 提供更詳細的錯誤訊息
+      let errorMessage = '登入失敗，請稍後再試';
+      
+      if (error.message?.includes('invalid_client') || error.message?.includes('401')) {
+        errorMessage = 'OAuth 設定錯誤：請檢查 Supabase Dashboard 中的 Google Provider 設定\n\n' +
+          '常見問題：\n' +
+          '1. Client ID 不完整或不正確\n' +
+          '2. Client Secret 與 Google Cloud Console 不匹配\n' +
+          '3. 請參考 FINAL_FIX_INVALID_CLIENT.md 進行檢查';
+      }
+      
+      alert(errorMessage);
     }
   }
 
