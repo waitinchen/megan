@@ -691,30 +691,59 @@ function HomePage() {
         </div>
       )}
 
-      {/* User Menu - Fixed Position (Right Top) */}
+      {/* Hamburger Menu - Fixed Position (Right Top) */}
       {!isAvatarZoomed && !isCheckingAuth && (
         <div className="fixed top-6 right-6 z-50" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 bg-white/80 backdrop-blur-xl px-4 py-3 rounded-2xl shadow-lg border border-white/20 hover:bg-white transition-all"
+            className="flex items-center justify-center w-12 h-12 bg-white/80 backdrop-blur-xl rounded-full shadow-lg border border-white/20 hover:bg-white transition-all"
+            title="選單"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-200 to-purple-200 flex items-center justify-center text-sm font-semibold text-slate-700">
-              {nickname?.charAt(0) || '?'}
-            </div>
-            <span className="text-sm font-medium text-slate-800">{nickname}</span>
             <svg
-              className={`w-4 h-4 text-slate-600 transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
+              className="w-6 h-6 text-slate-700"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
 
           {/* Dropdown Menu */}
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 py-2 overflow-hidden">
+            <div className="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 py-2 overflow-hidden">
+              {/* User Info Header */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-rose-50 to-purple-50 border-b border-slate-200">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-200 to-purple-200 flex items-center justify-center text-sm font-semibold text-slate-700">
+                  {nickname?.charAt(0) || '?'}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">{nickname}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
+                    <span className="text-xs text-slate-500">{isConnected ? "在線上" : "離線"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* API Status */}
+              <div className="px-4 py-3 border-b border-slate-200">
+                <div className="text-xs font-semibold text-slate-600 mb-2">系統狀態</div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600">語音系統</span>
+                  <span className={`font-medium ${apiStatus.elevenlabs === 'ok' ? 'text-emerald-600' : apiStatus.elevenlabs === 'error' ? 'text-red-600' : 'text-amber-600'}`}>
+                    {apiStatus.elevenlabs === 'ok' ? '✓ 正常' : apiStatus.elevenlabs === 'error' ? '✗ 異常' : '⋯ 檢查中'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs mt-1.5">
+                  <span className="text-slate-600">AI 系統</span>
+                  <span className={`font-medium ${apiStatus.llm === 'ok' ? 'text-emerald-600' : apiStatus.llm === 'error' ? 'text-red-600' : 'text-amber-600'}`}>
+                    {apiStatus.llm === 'ok' ? '✓ 正常' : apiStatus.llm === 'error' ? '✗ 異常' : '⋯ 檢查中'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Menu Items */}
               <a
                 href="/dashboard/profile"
                 className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
