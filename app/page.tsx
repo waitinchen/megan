@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, Suspense } from "react";
-import { Send, Mic, Volume2, Sparkles, Trash2, RotateCcw, Download, Star } from "lucide-react";
+import { Send, Mic, Volume2, Sparkles, RotateCcw, Download, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -54,7 +54,6 @@ function HomePage() {
   const [isAvatarZoomed, setIsAvatarZoomed] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -73,7 +72,7 @@ function HomePage() {
     async function checkAuth() {
       try {
         const { data: authData } = await supabase.auth.getUser();
-        
+
         if (!authData.user) {
           // Not logged in, redirect to login
           router.push('/login');
@@ -106,6 +105,29 @@ function HomePage() {
 
     checkAuth();
   }, [supabase, router]);
+
+  // Listen for nickname updates
+  useEffect(() => {
+    const handleStorageChange = async (e: StorageEvent) => {
+      if (e.key === 'nickname-updated' && userId) {
+        console.log('[Megan] 檢測到暱稱更新，重新載入...');
+        // Reload nickname from database
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("nickname")
+          .eq("id", userId)
+          .single();
+
+        if (profile) {
+          setNickname(profile.nickname);
+          console.log('[Megan] 暱稱已更新為:', profile.nickname);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [userId, supabase]);
 
   // Load conversation from URL parameter or localStorage
   useEffect(() => {
@@ -363,27 +385,6 @@ function HomePage() {
     setIsPlaying(true);
     audio.play();
     audio.onended = () => setIsPlaying(false);
-  };
-
-  const handleClearHistory = async () => {
-    try {
-      localStorage.removeItem('megan_conversation_history');
-      setMessages([]);
-      setCurrentConversationId(null);
-      setShowClearConfirm(false);
-      
-      // 清除 URL 參數
-      router.replace('/', { scroll: false });
-
-      // 如果當前對話存在，可以選擇刪除它（可選）
-      // if (currentConversationId) {
-      //   await fetch(`/api/conversations?id=${currentConversationId}`, { method: 'DELETE' });
-      // }
-
-      console.log('[Megan] 🗑️ 對話記錄已清除');
-    } catch (error) {
-      console.error('[Megan] 清除對話記錄失敗:', error);
-    }
   };
 
   const handleReplay = (audioBase64: string) => {
@@ -815,16 +816,6 @@ function HomePage() {
       {/* Header / Status - Right Side Only */}
       <header className="fixed top-6 right-6 z-50 flex items-center justify-end">
         <div className="flex gap-2 items-center">
-          {/* Clear History Button */}
-          {messages.length > 0 && (
-            <button
-              onClick={() => setShowClearConfirm(true)}
-              className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-              title="清除對話記錄"
-            >
-              <Trash2 size={16} />
-            </button>
-          )}
           {/* Debug Tags */}
           <div className="hidden sm:flex gap-1">
             {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].emotion?.map(tag => (
@@ -1135,37 +1126,6 @@ function HomePage() {
         </div>
       </footer>
 
-      {/* Clear Confirmation Dialog */}
-      {showClearConfirm && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/60 z-[9998] backdrop-blur-sm"
-            onClick={() => setShowClearConfirm(false)}
-          />
-          <div className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 pointer-events-auto">
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">清除對話記錄？</h3>
-              <p className="text-sm text-slate-600 mb-6">
-                確定要清除所有對話記錄嗎？此操作無法復原。
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowClearConfirm(false)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleClearHistory}
-                  className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
-                >
-                  清除
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 }
