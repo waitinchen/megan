@@ -179,7 +179,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: fullHistory,
-          userIdentity: "dad", // Defaulting to 'dad' for demo purposes as per Lingya logic
+          userIdentity: nickname || "你", // Use actual user nickname
         }),
       });
 
@@ -342,7 +342,7 @@ export default function Home() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               messages: fullHistory,
-              userIdentity: "dad",
+              userIdentity: nickname || "你",
             }),
           });
 
@@ -435,7 +435,7 @@ export default function Home() {
 
           <div>
             <h1 className="font-semibold text-slate-800">
-              {nickname ? `嗨，${nickname}` : "Megan"}
+              嗨 · Megan
             </h1>
             <div className="flex items-center gap-1.5">
               <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
@@ -587,7 +587,7 @@ export default function Home() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       messages: [{ role: "user", content: message }],
-                      userIdentity: "dad",
+                      userIdentity: nickname || "你",
                     }),
                   });
 
@@ -633,7 +633,7 @@ export default function Home() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       messages: [{ role: "user", content: message }],
-                      userIdentity: "dad",
+                      userIdentity: nickname || "你",
                     }),
                   });
 
@@ -679,7 +679,7 @@ export default function Home() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       messages: [{ role: "user", content: message }],
-                      userIdentity: "dad",
+                      userIdentity: nickname || "你",
                     }),
                   });
 
