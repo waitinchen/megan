@@ -7,6 +7,8 @@ import { cookies } from 'next/headers';
 /**
  * GET /api/conversations
  * 獲取用戶的所有對話列表
+ *
+ * @version 2.0.0 - Fixed Next.js 16 cookies API usage
  */
 export async function GET(request: Request) {
   try {

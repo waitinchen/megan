@@ -8,6 +8,8 @@ import { cookies } from 'next/headers';
  * GET /api/favorites
  * 獲取用戶的所有收藏
  * 支援查詢參數：search (搜尋關鍵字), sort (asc/desc)
+ *
+ * @version 2.0.0 - Fixed Next.js 16 cookies API usage
  */
 export async function GET(request: Request) {
   try {
