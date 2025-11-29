@@ -1,12 +1,21 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { mapEmotionToElevenLabs } from './soul/elevenlabs-adapter';
 
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "WUEPpaWdYrRSq7wyeO9O";
 
-const client = new ElevenLabsClient({
-    apiKey: ELEVENLABS_API_KEY,
-});
+// Lazy initialization to avoid requiring API key during build time
+let client: ElevenLabsClient | null = null;
+
+function getClient(): ElevenLabsClient {
+    if (!client) {
+        const apiKey = process.env.ELEVENLABS_API_KEY;
+        if (!apiKey) {
+            throw new Error('ELEVENLABS_API_KEY is not set in environment variables');
+        }
+        client = new ElevenLabsClient({ apiKey });
+    }
+    return client;
+}
 
 
 // Model configuration and limits
@@ -67,10 +76,6 @@ function truncateTextForModel(text: string, maxChars: number): string {
  * Generate speech with fallback and error handling
  */
 export async function generateSpeech(text: string, emotionTags: string[]) {
-    if (!ELEVENLABS_API_KEY) {
-        throw new Error("Missing ELEVENLABS_API_KEY");
-    }
-
     // 1. Map Emotion Tags to ElevenLabs Parameters (includes V3 tag injection)
     const params = mapEmotionToElevenLabs(emotionTags, text);
 
@@ -138,7 +143,7 @@ async function generateWithFallback(
             // The model will automatically detect Chinese characters and use appropriate pronunciation
 
             // Create a promise with timeout
-            const audioPromise = client.textToSpeech.convert(VOICE_ID, {
+            const audioPromise = getClient().textToSpeech.convert(VOICE_ID, {
                 text: textToSpeak,
                 modelId: currentModel,
                 voiceSettings: {
