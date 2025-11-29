@@ -56,6 +56,7 @@ function HomePage() {
   const [apiStatus, setApiStatus] = useState<{ elevenlabs: string; llm: string }>({ elevenlabs: 'checking', llm: 'checking' });
   const [isListening, setIsListening] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -82,7 +83,7 @@ function HomePage() {
         // Check if user has nickname
         const { data: profile } = await supabase
           .from("profiles")
-          .select("nickname")
+          .select("nickname, avatar_url")
           .eq("id", authData.user.id)
           .single();
 
@@ -94,6 +95,7 @@ function HomePage() {
 
         // User is authenticated and has nickname
         setNickname(profile.nickname);
+        setAvatarUrl(profile.avatar_url);
         setUserId(authData.user.id);
         setIsCheckingAuth(false);
         setIsConnected(true);
@@ -715,9 +717,17 @@ function HomePage() {
             <div className="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 py-2 overflow-hidden">
               {/* User Info Header */}
               <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-rose-50 to-purple-50 border-b border-slate-200">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-200 to-purple-200 flex items-center justify-center text-sm font-semibold text-slate-700">
-                  {nickname?.charAt(0) || '?'}
-                </div>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={nickname || 'User'}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-200 to-purple-200 flex items-center justify-center text-sm font-semibold text-slate-700">
+                    {nickname?.charAt(0) || '?'}
+                  </div>
+                )}
                 <div>
                   <div className="text-sm font-semibold text-slate-800">{nickname}</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
