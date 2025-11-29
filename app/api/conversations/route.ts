@@ -12,11 +12,19 @@ export async function GET(request: Request) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (!user) {
+    if (sessionError) {
+      console.error('[API Conversations] GET Session Error:', sessionError);
+      return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    }
+
+    if (!session) {
+      console.warn('[API Conversations] GET No session found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const user = session.user;
 
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('id');

@@ -1,19 +1,21 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function AuthCallback() {
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const hasExchanged = useRef(false)
 
   useEffect(() => {
-    let isHandled = false
-
     async function handleOAuth() {
-      if (isHandled) return
-      isHandled = true
+      if (hasExchanged.current) {
+        console.log('[OAuth Callback] Already handled, skipping')
+        return
+      }
+      hasExchanged.current = true
 
       try {
         // Exchange code from URL for session
