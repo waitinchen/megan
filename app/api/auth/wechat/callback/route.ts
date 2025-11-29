@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
     const appid = process.env.WECHAT_APPID!;
     const secret = process.env.WECHAT_SECRET!;
     
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // ========================================
     // 步驟 1: 用 code 換 access_token
