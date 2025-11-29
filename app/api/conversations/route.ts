@@ -1,8 +1,9 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { ok, fail, unauthorized, notFound, serverError } from '@/app/lib/api/response';
+import { ERROR_CODES } from '@/app/lib/api/errors';
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+      return unauthorized();
     }
 
     const userId = session.user.id;
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
         .single();
 
       if (convError || !conversation) {
-        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+        return notFound('Conversation not found');
       }
 
       const { data: messages, error: messagesError } = await supabase
@@ -40,10 +41,10 @@ export async function GET(request: Request) {
         .order('created_at', { ascending: true });
 
       if (messagesError) {
-        return NextResponse.json({ error: messagesError.message }, { status: 500 });
+        return fail(ERROR_CODES.DATABASE_ERROR, messagesError.message, 500);
       }
 
-      return NextResponse.json({
+      return ok({
         conversation: {
           ...conversation,
           messages: messages || []
@@ -60,13 +61,13 @@ export async function GET(request: Request) {
       .range(offset, offset + limit - 1);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
     }
 
-    return NextResponse.json({ conversations: data || [] });
+    return ok({ conversations: data || [] });
   } catch (error: any) {
     console.error('[API Conversations] GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 }
 
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+      return unauthorized();
     }
 
     const userId = session.user.id;
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
         .single();
 
       if (!existingConv) {
-        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+        return notFound('Conversation not found');
       }
 
       // 更新對話標題（如果提供）
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
           .eq('id', conversationId);
 
         if (updateError) {
-          return NextResponse.json({ error: updateError.message }, { status: 500 });
+          return fail(ERROR_CODES.DATABASE_ERROR, updateError.message, 500);
         }
       }
 
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
           .insert(messageInserts);
 
         if (insertError) {
-          return NextResponse.json({ error: insertError.message }, { status: 500 });
+          return fail(ERROR_CODES.DATABASE_ERROR, insertError.message, 500);
         }
       }
 
@@ -135,7 +136,7 @@ export async function POST(request: Request) {
         .eq('id', conversationId)
         .single();
 
-      return NextResponse.json({ conversation: updatedConv });
+      return ok({ conversation: updatedConv });
     }
 
     // 創建新對話
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
       .single();
 
     if (createError) {
-      return NextResponse.json({ error: createError.message }, { status: 500 });
+      return fail(ERROR_CODES.DATABASE_ERROR, createError.message, 500);
     }
 
     // 如果有訊息，添加訊息
@@ -173,7 +174,7 @@ export async function POST(request: Request) {
         .insert(messageInserts);
 
       if (insertError) {
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+        return fail(ERROR_CODES.DATABASE_ERROR, insertError.message, 500);
       }
     }
 
@@ -184,10 +185,10 @@ export async function POST(request: Request) {
       .eq('id', newConversation.id)
       .single();
 
-    return NextResponse.json({ conversation: finalConversation });
+    return ok({ conversation: finalConversation });
   } catch (error: any) {
     console.error('[API Conversations] POST Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 }
 
@@ -198,7 +199,7 @@ export async function DELETE(request: Request) {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+      return unauthorized();
     }
 
     const userId = session.user.id;
@@ -206,7 +207,7 @@ export async function DELETE(request: Request) {
     const conversationId = searchParams.get('id');
 
     if (!conversationId) {
-      return NextResponse.json({ error: 'Missing conversation ID' }, { status: 400 });
+      return fail(ERROR_CODES.MISSING_FIELD, 'Missing conversation ID');
     }
 
     // 驗證對話屬於該用戶
@@ -218,7 +219,7 @@ export async function DELETE(request: Request) {
       .single();
 
     if (!existingConv) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+      return notFound('Conversation not found');
     }
 
     const { error } = await supabase
@@ -227,12 +228,12 @@ export async function DELETE(request: Request) {
       .eq('id', conversationId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
     }
 
-    return NextResponse.json({ success: true });
+    return ok({ success: true });
   } catch (error: any) {
     console.error('[API Conversations] DELETE Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 }

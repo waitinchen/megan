@@ -5,6 +5,7 @@ import { Send, Mic, Volume2, Sparkles, RotateCcw, Download, Star } from "lucide-
 import { motion, AnimatePresence } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
+import { saveTimelineEvent, createTimelineEventFromMessage } from "@/app/lib/timeline/timeline-service";
 
 // Emotion to Color Mapping
 const emotionColors: Record<string, string> = {
@@ -322,6 +323,22 @@ function HomePage() {
     setInput("");
     setIsLoading(true);
 
+    // Save user message to Timeline (async, non-blocking)
+    if (userId) {
+      const timelineEvent = createTimelineEventFromMessage(
+        userId,
+        'user',
+        input,
+        {
+          conversationId: currentConversationId || undefined,
+          messageIndex: messages.length,
+        }
+      );
+      saveTimelineEvent(timelineEvent).catch(err => {
+        console.error('[Timeline] Failed to save user message:', err);
+      });
+    }
+
     try {
       // Prepare full conversation history including the new user message
       const fullHistory = [...messages, userMessage].map(m => ({
@@ -359,6 +376,24 @@ function HomePage() {
         audio: data.audio, // Store audio for replay/download
       };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Save assistant message to Timeline (async, non-blocking)
+      if (userId) {
+        const timelineEvent = createTimelineEventFromMessage(
+          userId,
+          'ai',
+          data.text,
+          {
+            conversationId: currentConversationId || undefined,
+            messageIndex: messages.length + 1,
+            emotion: data.emotionTags?.[0],
+            audioUrl: data.audio ? 'data:audio/mpeg;base64' : undefined,
+          }
+        );
+        saveTimelineEvent(timelineEvent).catch(err => {
+          console.error('[Timeline] Failed to save assistant message:', err);
+        });
+      }
 
       // Play Audio
       if (data.audio) {

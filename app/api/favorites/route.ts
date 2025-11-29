@@ -1,8 +1,9 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { ok, fail, unauthorized, serverError } from '@/app/lib/api/response';
+import { ERROR_CODES } from '@/app/lib/api/errors';
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+      return unauthorized();
     }
 
     const userId = session.user.id;
@@ -31,10 +32,10 @@ export async function GET(request: Request) {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
       }
 
-      return NextResponse.json({ 
+      return ok({ 
         isFavorited: !!data,
         favoriteId: data?.id || null
       });
@@ -55,13 +56,13 @@ export async function GET(request: Request) {
     const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
     }
 
-    return NextResponse.json({ favorites: data || [] });
+    return ok({ favorites: data || [] });
   } catch (error: any) {
     console.error('[API Favorites] GET Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 }
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+      return unauthorized();
     }
 
     const userId = session.user.id;
@@ -80,17 +81,11 @@ export async function POST(request: Request) {
     const { type, content, audio_url } = body;
 
     if (!type || !content) {
-      return NextResponse.json(
-        { error: 'Missing required fields: type, content' },
-        { status: 400 }
-      );
+      return fail(ERROR_CODES.MISSING_FIELD, 'Missing required fields: type, content');
     }
 
     if (type !== 'text' && type !== 'audio') {
-      return NextResponse.json(
-        { error: 'Invalid type. Must be "text" or "audio"' },
-        { status: 400 }
-      );
+      return fail(ERROR_CODES.INVALID_FORMAT, 'Invalid type. Must be "text" or "audio"');
     }
 
     // 防重複檢查
@@ -103,10 +98,7 @@ export async function POST(request: Request) {
       .single();
 
     if (existing) {
-      return NextResponse.json(
-        { error: '此內容已收藏', alreadyFavorited: true, favoriteId: existing.id },
-        { status: 409 }
-      );
+      return fail(ERROR_CODES.ALREADY_EXISTS, '此內容已收藏', 409);
     }
 
     const { data, error } = await supabase
@@ -121,13 +113,13 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
     }
 
-    return NextResponse.json({ favorite: data });
+    return ok({ favorite: data });
   } catch (error: any) {
     console.error('[API Favorites] POST Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 }
 
@@ -138,7 +130,7 @@ export async function DELETE(request: Request) {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+      return unauthorized();
     }
 
     const userId = session.user.id;
@@ -146,10 +138,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'Missing required parameter: id' },
-        { status: 400 }
-      );
+      return fail(ERROR_CODES.MISSING_FIELD, 'Missing required parameter: id');
     }
 
     const { error } = await supabase
@@ -159,12 +148,12 @@ export async function DELETE(request: Request) {
       .eq('user_id', userId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
     }
 
-    return NextResponse.json({ success: true });
+    return ok({ success: true });
   } catch (error: any) {
     console.error('[API Favorites] DELETE Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 }
