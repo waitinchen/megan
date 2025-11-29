@@ -11,7 +11,8 @@ import { cookies } from 'next/headers';
  */
 export async function GET(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getSession() instead of getUser() for better session handling
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -87,7 +88,8 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
@@ -166,7 +168,8 @@ export async function POST(request: Request) {
  */
 export async function DELETE(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
