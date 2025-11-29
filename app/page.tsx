@@ -5,7 +5,7 @@ import { Send, Mic, Volume2, Sparkles, RotateCcw, Download, Star } from "lucide-
 import { motion, AnimatePresence } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
-import { saveTimelineEvent, createTimelineEventFromMessage } from "@/app/lib/timeline/timeline-service";
+import { saveTimeline, createTimelineEventFromMessage } from "@/app/lib/timeline/timeline-service";
 
 // Emotion to Color Mapping
 const emotionColors: Record<string, string> = {
@@ -334,7 +334,7 @@ function HomePage() {
           messageIndex: messages.length,
         }
       );
-      saveTimelineEvent(timelineEvent).catch(err => {
+      saveTimeline(userId, timelineEvent).catch(err => {
         console.error('[Timeline] Failed to save user message:', err);
       });
     }
@@ -390,7 +390,7 @@ function HomePage() {
             audioUrl: data.audio ? 'data:audio/mpeg;base64' : undefined,
           }
         );
-        saveTimelineEvent(timelineEvent).catch(err => {
+        saveTimeline(userId, timelineEvent).catch(err => {
           console.error('[Timeline] Failed to save assistant message:', err);
         });
       }

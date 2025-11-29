@@ -1,20 +1,17 @@
 /**
- * Memory Service v5 - Enterprise Grade Memory Engine
+ * Memory Service v5 (Simplified)
  * 
- * Supports:
- * - Multi-user partitions
- * - TTL (Time To Live)
- * - Memory versioning
- * - Structured keys
+ * Client-side service for interacting with the Memory API
  * 
  * Key Structure:
  * memory:v5:users:${userId}:profile
  * memory:v5:users:${userId}:tone
  * memory:v5:users:${userId}:preferences
- * memory:v5:session:${sessionId}:context
+ * memory:v5:users:${userId}:relationship
+ * memory:v5:users:${userId}:longterm
  */
 
-const MEMORY_API_URL = process.env.NEXT_PUBLIC_MEMORY_API_URL || 'https://tone-memory-core-1.waitin-chen.workers.dev';
+const MEMORY_API_URL = process.env.NEXT_PUBLIC_MEMORY_URL || 'https://tone-memory-core-1.waitin-chen.workers.dev';
 
 export interface UserMemory {
   profile?: {
@@ -47,10 +44,39 @@ export interface UserMemory {
   };
 }
 
-export interface MemoryValue<T = any> {
-  __memory_version: number;
-  updatedAt: number;
-  value: T;
+/**
+ * Save memory with key and value
+ */
+export async function saveMemory(key: string, value: any): Promise<{ ok: boolean; stored?: any; error?: string }> {
+  try {
+    const response = await fetch(`${MEMORY_API_URL}/memory`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, value: typeof value === 'string' ? value : JSON.stringify(value) }),
+    });
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('[Memory Service v5] Error saving memory:', error);
+    return { ok: false, error: error.message };
+  }
+}
+
+/**
+ * Load memory by key
+ */
+export async function loadMemory(key: string): Promise<{ key: string; value: string | null }> {
+  try {
+    const response = await fetch(`${MEMORY_API_URL}/memory?key=${encodeURIComponent(key)}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('[Memory Service v5] Error loading memory:', error);
+    return { key, value: null };
+  }
 }
 
 /**
@@ -61,103 +87,41 @@ function buildMemoryKey(userId: string, category: 'profile' | 'tone' | 'preferen
 }
 
 /**
- * Get memory by key (v5)
- */
-export async function getMemory<T = any>(key: string): Promise<T | null> {
-  try {
-    const response = await fetch(`${MEMORY_API_URL}/memory?key=${encodeURIComponent(key)}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`[Memory Service v5] Failed to get memory: ${response.statusText}`);
-      return null;
-    }
-
-    const result = await response.json();
-    if (!result.success || !result.data) {
-      return null;
-    }
-
-    const memory: MemoryValue<T> = result.data;
-    if (memory.__memory_version !== 5) {
-      console.warn(`[Memory Service v5] Memory version mismatch: expected 5, got ${memory.__memory_version}`);
-    }
-
-    return memory.value;
-  } catch (error) {
-    console.error('[Memory Service v5] Error getting memory:', error);
-    return null;
-  }
-}
-
-/**
- * Save memory with key and optional TTL (v5)
- */
-export async function saveMemory<T = any>(
-  key: string,
-  value: T,
-  ttl?: number
-): Promise<boolean> {
-  try {
-    const response = await fetch(`${MEMORY_API_URL}/memory`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        key,
-        value: {
-          __memory_version: 5,
-          updatedAt: Date.now(),
-          value,
-        },
-        ttl, // TTL in seconds (default 30 days if not provided)
-      }),
-    });
-
-    if (!response.ok) {
-      console.error(`[Memory Service v5] Failed to save memory: ${response.statusText}`);
-      return false;
-    }
-
-    const result = await response.json();
-    return result.success === true;
-  } catch (error) {
-    console.error('[Memory Service v5] Error saving memory:', error);
-    return false;
-  }
-}
-
-/**
- * Get user memory by category (v5)
+ * Get user memory by category
  */
 export async function getUserMemoryByCategory(
   userId: string,
   category: 'profile' | 'tone' | 'preferences' | 'relationship' | 'longterm'
 ): Promise<any> {
   const key = buildMemoryKey(userId, category);
-  return await getMemory(key);
+  const result = await loadMemory(key);
+  
+  if (!result.value) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(result.value);
+  } catch {
+    return result.value; // If not JSON, return as string
+  }
 }
 
 /**
- * Save user memory by category (v5)
+ * Save user memory by category
  */
 export async function saveUserMemoryByCategory(
   userId: string,
   category: 'profile' | 'tone' | 'preferences' | 'relationship' | 'longterm',
-  value: any,
-  ttl?: number
+  value: any
 ): Promise<boolean> {
   const key = buildMemoryKey(userId, category);
-  return await saveMemory(key, value, ttl);
+  const result = await saveMemory(key, value);
+  return result.ok === true;
 }
 
 /**
- * Get all user memories (v5) - fetches all categories
+ * Get all user memories (fetches all categories)
  */
 export async function getUserMemories(userId: string): Promise<UserMemory> {
   const [profile, preferences, relationship, longterm] = await Promise.all([
@@ -177,21 +141,20 @@ export async function getUserMemories(userId: string): Promise<UserMemory> {
 }
 
 /**
- * Update user memory category (v5) - merges with existing data
+ * Update user memory category (merges with existing data)
  */
 export async function updateUserMemory(
   userId: string,
   category: 'profile' | 'preferences' | 'relationship' | 'longterm',
-  value: any,
-  ttl?: number
+  value: any
 ): Promise<boolean> {
   const existing = await getUserMemoryByCategory(userId, category);
   const merged = existing ? { ...existing, ...value } : value;
-  return await saveUserMemoryByCategory(userId, category, merged, ttl);
+  return await saveUserMemoryByCategory(userId, category, merged);
 }
 
 /**
- * Build memory context for LLM (same as v4, for compatibility)
+ * Build memory context for LLM
  */
 export function buildMemoryContext(nickname: string, memories: UserMemory): string {
   const sections: string[] = [];

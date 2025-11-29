@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     }
 
     const result = await response.json();
-    return ok(result.data || []);
+    return ok(result.events || []);
   } catch (error: any) {
     console.error('[API Timeline] GET Error:', error);
     return serverError(error.message || 'Failed to fetch timeline events');

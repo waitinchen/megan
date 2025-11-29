@@ -1,174 +1,69 @@
 /**
- * Memory Service Worker v5 (Enterprise Grade)
+ * Memory Worker v5 (Simplified Version)
  * 
- * Cloudflare Worker for storing user memories with:
- * - Multi-user partitions
- * - TTL (Time To Live)
- * - Memory versioning
- * - Structured keys
+ * Cloudflare Worker for storing user memories
  * 
  * Setup:
- * 1. Create a new Cloudflare Worker (or update existing)
- * 2. Bind a KV namespace named "MEGAN_MEMORY"
+ * 1. Create a new Cloudflare Worker named "megan-memory-v5"
+ * 2. Bind KV namespace "MEGAN_MEMORY" with variable name "MEGAN_MEMORY"
  * 3. Deploy this code
- * 4. Set NEXT_PUBLIC_MEMORY_API_URL to your worker URL
+ * 4. Set NEXT_PUBLIC_MEMORY_URL to your worker URL
  */
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const method = request.method;
+    try {
+      const url = new URL(request.url);
+      const path = url.pathname;
 
-    // CORS headers
-    const cors = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    };
-
-    // Handle preflight
-    if (request.method === "OPTIONS") {
-      return new Response("", { headers: cors });
-    }
-
-    // POST /memory → Save memory with version and TTL
-    if (request.method === "POST") {
-      try {
-        const body = await request.json();
-        const { key, value, ttl } = body;
-
-        if (!key) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: { code: "VALIDATION_ERROR", message: "Missing required field: key" }
-            }),
-            {
-              status: 400,
-              headers: { ...cors, "Content-Type": "application/json" }
-            }
-          );
-        }
-
-        // Validate that value has the correct structure
-        if (!value || typeof value !== 'object' || !value.__memory_version) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: { code: "VALIDATION_ERROR", message: "Invalid memory value structure. Expected { __memory_version, updatedAt, value }" }
-            }),
-            {
-              status: 400,
-              headers: { ...cors, "Content-Type": "application/json" }
-            }
-          );
-        }
-
-        // Default TTL: 30 days (in seconds)
-        const expirationTtl = ttl || (60 * 60 * 24 * 30);
-
-        await env.MEGAN_MEMORY.put(key, JSON.stringify(value), {
-          expirationTtl,
-        });
-
-        return new Response(
-          JSON.stringify({ success: true }),
-          {
-            headers: { ...cors, "Content-Type": "application/json" }
-          }
-        );
-      } catch (error) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: { code: "INTERNAL_ERROR", message: error.message }
-          }),
-          {
-            status: 500,
-            headers: { ...cors, "Content-Type": "application/json" }
-          }
-        );
-      }
-    }
-
-    // GET /memory?key=xxx → Get memory by key
-    if (request.method === "GET") {
-      try {
+      // GET /memory?key=xxx
+      if (request.method === "GET" && path === "/memory") {
         const key = url.searchParams.get("key");
 
         if (!key) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: { code: "VALIDATION_ERROR", message: "Missing required parameter: key" }
-            }),
-            {
-              status: 400,
-              headers: { ...cors, "Content-Type": "application/json" }
-            }
-          );
+          return new Response(JSON.stringify({ error: "Missing key" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
-        const raw = await env.MEGAN_MEMORY.get(key);
+        const value = await env.MEGAN_MEMORY.get(key);
 
-        if (!raw) {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              data: null
-            }),
-            {
-              headers: { ...cors, "Content-Type": "application/json" }
-            }
-          );
-        }
-
-        try {
-          const data = JSON.parse(raw);
-          return new Response(
-            JSON.stringify({
-              success: true,
-              data
-            }),
-            {
-              headers: { ...cors, "Content-Type": "application/json" }
-            }
-          );
-        } catch (parseError) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: { code: "PARSE_ERROR", message: "Failed to parse stored memory" }
-            }),
-            {
-              status: 500,
-              headers: { ...cors, "Content-Type": "application/json" }
-            }
-          );
-        }
-      } catch (error) {
         return new Response(
-          JSON.stringify({
-            success: false,
-            error: { code: "INTERNAL_ERROR", message: error.message }
-          }),
-          {
-            status: 500,
-            headers: { ...cors, "Content-Type": "application/json" }
-          }
+          JSON.stringify({ key, value }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
         );
       }
-    }
 
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: { code: "NOT_FOUND", message: "Method not allowed" }
-      }),
-      {
-        status: 404,
-        headers: { ...cors, "Content-Type": "application/json" }
+      // POST /memory
+      if (request.method === "POST" && path === "/memory") {
+        const body = await request.json().catch(() => null);
+
+        if (!body || !body.key) {
+          return new Response(JSON.stringify({ error: "Missing key/value" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        await env.MEGAN_MEMORY.put(body.key, String(body.value));
+
+        return new Response(
+          JSON.stringify({ ok: true, stored: body }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
       }
-    );
+
+      // Default route
+      return new Response("Megan Memory v5 API is running.", {
+        status: 200,
+        headers: { "Content-Type": "text/plain" },
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.stack }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   },
 };

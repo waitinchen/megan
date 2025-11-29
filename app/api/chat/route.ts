@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { generateResponse } from '@/app/lib/soul/llm-service';
 import { generateSpeech } from '@/app/lib/elevenlabs-client';
-import { getUserMemories, buildMemoryContext } from '@/app/lib/memory/memory-service';
+import { getUserMemories, buildMemoryContext } from '@/app/lib/memory/memory-service-v5';
 
 /**
  * Removes ElevenLabs V3 audio tags from text for display purposes
