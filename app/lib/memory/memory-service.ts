@@ -98,14 +98,14 @@ export async function updateUserMemory(
     };
 
     // 保存回 KV
-    const key = `megan:${userId}`;
+    const kvKey = `megan:${userId}`;
     const response = await fetch(`${MEMORY_API_URL}/memory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        key,
+        key: kvKey,
         value: updatedMemories,
       }),
     });
