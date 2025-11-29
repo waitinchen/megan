@@ -7,7 +7,7 @@
  * 3. 將記憶注入到對話 Context
  */
 
-const MEMORY_API_URL = process.env.NEXT_PUBLIC_MEMORY_API_URL || '';
+const MEMORY_API_URL = process.env.NEXT_PUBLIC_MEMORY_API_URL || 'https://tone-memory-core-1.waitin-chen.workers.dev';
 
 export interface UserMemory {
   profile?: {
@@ -45,7 +45,8 @@ export interface UserMemory {
  */
 export async function getUserMemories(userId: string): Promise<UserMemory> {
   try {
-    const response = await fetch(`${MEMORY_API_URL}/memory/${userId}`, {
+    const key = `megan:${userId}`;
+    const response = await fetch(`${MEMORY_API_URL}/memory?key=${encodeURIComponent(key)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -97,12 +98,16 @@ export async function updateUserMemory(
     };
 
     // 保存回 KV
-    const response = await fetch(`${MEMORY_API_URL}/memory/${userId}`, {
+    const key = `megan:${userId}`;
+    const response = await fetch(`${MEMORY_API_URL}/memory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updatedMemories),
+      body: JSON.stringify({
+        key,
+        value: updatedMemories,
+      }),
     });
 
     if (!response.ok) {
