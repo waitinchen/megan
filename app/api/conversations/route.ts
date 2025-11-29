@@ -1,34 +1,20 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
-/**
- * GET /api/conversations
- * 獲取用戶的所有對話列表
- *
- * @version 2.0.0 - Fixed Next.js 16 cookies API usage
- */
 export async function GET(request: Request) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('[API Conversations] GET Session Error:', sessionError);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
-    }
-
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.warn('[API Conversations] GET No session found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
-    const user = session.user;
-
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('id');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -36,26 +22,26 @@ export async function GET(request: Request) {
 
     // 如果提供了對話 ID，獲取特定對話的詳細信息（包含所有訊息）
     if (conversationId) {
-      // 獲取對話基本資訊
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .select('*')
         .eq('id', conversationId)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
       if (convError || !conversation) {
         return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
       }
 
-      // 獲取對話的所有訊息
       const { data: messages, error: messagesError } = await supabase
         .from('conversation_messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
-      if (messagesError) throw messagesError;
+      if (messagesError) {
+        return NextResponse.json({ error: messagesError.message }, { status: 500 });
+      }
 
       return NextResponse.json({
         conversation: {
@@ -65,15 +51,17 @@ export async function GET(request: Request) {
       });
     }
 
-    // 否則獲取對話列表
+    // 獲取對話列表
     const { data, error } = await supabase
       .from('conversations')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('last_message_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ conversations: data || [] });
   } catch (error: any) {
@@ -82,44 +70,27 @@ export async function GET(request: Request) {
   }
 }
 
-/**
- * POST /api/conversations
- * 創建新對話或更新現有對話
- */
 export async function POST(request: Request) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('[API Conversations] POST Session Error:', sessionError);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
-    }
-
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.warn('[API Conversations] POST No session found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
-    const user = session.user;
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const userId = session.user.id;
     const body = await request.json();
     const { conversationId, title, messages } = body;
 
     // 如果有 conversationId，表示更新現有對話
     if (conversationId) {
-      // 驗證對話屬於該用戶
       const { data: existingConv } = await supabase
         .from('conversations')
         .select('id')
         .eq('id', conversationId)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
       if (!existingConv) {
@@ -133,7 +104,9 @@ export async function POST(request: Request) {
           .update({ title })
           .eq('id', conversationId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
       }
 
       // 如果提供了訊息，添加新訊息
@@ -150,7 +123,9 @@ export async function POST(request: Request) {
           .from('conversation_messages')
           .insert(messageInserts);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          return NextResponse.json({ error: insertError.message }, { status: 500 });
+        }
       }
 
       // 返回更新後的對話
@@ -171,7 +146,7 @@ export async function POST(request: Request) {
     const { data: newConversation, error: createError } = await supabase
       .from('conversations')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         title: title || null,
         preview,
         message_count: 0,
@@ -179,7 +154,9 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (createError) throw createError;
+    if (createError) {
+      return NextResponse.json({ error: createError.message }, { status: 500 });
+    }
 
     // 如果有訊息，添加訊息
     if (messages && Array.isArray(messages) && messages.length > 0) {
@@ -195,7 +172,9 @@ export async function POST(request: Request) {
         .from('conversation_messages')
         .insert(messageInserts);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
     }
 
     // 重新獲取對話（包含更新後的 metadata）
@@ -212,33 +191,17 @@ export async function POST(request: Request) {
   }
 }
 
-/**
- * DELETE /api/conversations?id=xxx
- * 刪除對話
- */
 export async function DELETE(request: Request) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('[API Conversations] DELETE Session Error:', sessionError);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
-    }
-
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.warn('[API Conversations] DELETE No session found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
-    const user = session.user;
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('id');
 
@@ -251,20 +214,21 @@ export async function DELETE(request: Request) {
       .from('conversations')
       .select('id')
       .eq('id', conversationId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (!existingConv) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // 刪除對話（會自動刪除相關訊息，因為有 ON DELETE CASCADE）
     const { error } = await supabase
       .from('conversations')
       .delete()
       .eq('id', conversationId);
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -272,4 +236,3 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

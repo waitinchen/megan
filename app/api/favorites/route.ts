@@ -1,57 +1,37 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
-/**
- * GET /api/favorites
- * 獲取用戶的所有收藏
- * 支援查詢參數：search (搜尋關鍵字), sort (asc/desc)
- *
- * @version 2.0.0 - Fixed Next.js 16 cookies API usage
- */
 export async function GET(request: Request) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    // Use getSession() instead of getUser() for better session handling
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('[API Favorites] GET Session Error:', sessionError);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
-    }
-
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.warn('[API Favorites] GET No session found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
-    const user = session.user;
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
-    const sort = searchParams.get('sort') || 'desc'; // 'asc' or 'desc'
-    const checkContent = searchParams.get('check_content'); // 用於檢查特定內容是否已收藏
+    const sort = searchParams.get('sort') || 'desc';
+    const checkContent = searchParams.get('check_content');
 
-    // 如果只是檢查特定內容是否已收藏
+    // 檢查特定內容是否已收藏
     if (checkContent) {
       const { data, error } = await supabase
         .from('favorites')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('content', checkContent)
         .limit(1)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        throw error;
+      if (error && error.code !== 'PGRST116') {
+        return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
       return NextResponse.json({ 
@@ -60,22 +40,23 @@ export async function GET(request: Request) {
       });
     }
 
+    // 獲取收藏列表
     let query = supabase
       .from('favorites')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
-    // 搜尋功能
     if (search && search.trim()) {
       query = query.ilike('content', `%${search.trim()}%`);
     }
 
-    // 排序
     query = query.order('created_at', { ascending: sort === 'asc' });
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ favorites: data || [] });
   } catch (error: any) {
@@ -84,33 +65,17 @@ export async function GET(request: Request) {
   }
 }
 
-/**
- * POST /api/favorites
- * 新增收藏（防重複檢查）
- */
 export async function POST(request: Request) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('[API Favorites] POST Session Error:', sessionError);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
-    }
-
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.warn('[API Favorites] POST No session found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
-    const user = session.user;
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const userId = session.user.id;
     const body = await request.json();
     const { type, content, audio_url } = body;
 
@@ -128,11 +93,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // 檢查是否已經收藏過相同的內容
+    // 防重複檢查
     const { data: existing } = await supabase
       .from('favorites')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('content', content)
       .limit(1)
       .single();
@@ -140,14 +105,14 @@ export async function POST(request: Request) {
     if (existing) {
       return NextResponse.json(
         { error: '此內容已收藏', alreadyFavorited: true, favoriteId: existing.id },
-        { status: 409 } // 409 Conflict
+        { status: 409 }
       );
     }
 
     const { data, error } = await supabase
       .from('favorites')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         type,
         content,
         audio_url: audio_url || null,
@@ -155,7 +120,9 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ favorite: data });
   } catch (error: any) {
@@ -164,33 +131,17 @@ export async function POST(request: Request) {
   }
 }
 
-/**
- * DELETE /api/favorites
- * 刪除收藏
- */
 export async function DELETE(request: Request) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('[API Favorites] DELETE Session Error:', sessionError);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
-    }
-
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.warn('[API Favorites] DELETE No session found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
-    const user = session.user;
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -205,9 +156,11 @@ export async function DELETE(request: Request) {
       .from('favorites')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id); // Ensure user owns the favorite
+      .eq('user_id', userId);
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
