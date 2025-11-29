@@ -11,10 +11,22 @@ import { cookies } from 'next/headers';
  */
 export async function GET(request: Request) {
   try {
-    
     const supabase = createRouteHandlerClient({ cookies });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use getSession() instead of getUser() for better session handling
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('[API Favorites] GET Session Error:', sessionError);
+      return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    }
+
+    if (!session) {
+      console.warn('[API Favorites] GET No session found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = session.user;
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -75,10 +87,21 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    
     const supabase = createRouteHandlerClient({ cookies });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('[API Favorites] POST Session Error:', sessionError);
+      return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    }
+
+    if (!session) {
+      console.warn('[API Favorites] POST No session found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = session.user;
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -143,10 +166,21 @@ export async function POST(request: Request) {
  */
 export async function DELETE(request: Request) {
   try {
-    
     const supabase = createRouteHandlerClient({ cookies });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('[API Favorites] DELETE Session Error:', sessionError);
+      return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    }
+
+    if (!session) {
+      console.warn('[API Favorites] DELETE No session found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = session.user;
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

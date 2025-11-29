@@ -9,7 +9,12 @@ export default function AuthCallback() {
   const supabase = createClientComponentClient()
 
   useEffect(() => {
+    let isHandled = false
+
     async function handleOAuth() {
+      if (isHandled) return
+      isHandled = true
+
       try {
         // Exchange code from URL for session
         const code = new URL(window.location.href).searchParams.get('code')
