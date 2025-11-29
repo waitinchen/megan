@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { generateResponse } from '@/app/lib/soul/llm-service';
 import { generateSpeech } from '@/app/lib/elevenlabs-client';
