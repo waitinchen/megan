@@ -11,7 +11,21 @@ export default function AuthCallback() {
   useEffect(() => {
     async function handleOAuth() {
       try {
-        // Get the session from URL hash/query params
+        // Exchange code from URL for session
+        const code = new URL(window.location.href).searchParams.get('code')
+
+        if (code) {
+          console.log('[OAuth Callback] Exchanging code for session')
+          const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+          if (error) {
+            console.error('[OAuth Callback] Error exchanging code:', error)
+            router.replace('/login?error=exchange_failed')
+            return
+          }
+        }
+
+        // Get the session after exchange
         const { data, error } = await supabase.auth.getSession()
 
         if (error) {
