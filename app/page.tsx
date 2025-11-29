@@ -680,7 +680,7 @@ function HomePage() {
 
           <div>
             <h1 className="font-semibold text-slate-800">
-              嗨 · Megan
+              Megan
             </h1>
             <div className="flex items-center gap-1.5">
               <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />
@@ -813,17 +813,16 @@ function HomePage() {
         </>
       )}
 
-      {/* Header / Status - Right Side Only */}
-      <header className="fixed top-6 right-6 z-50 flex items-center justify-end">
-        <div className="flex gap-2 items-center">
-          {/* Debug Tags */}
-          <div className="hidden sm:flex gap-1">
-            {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].emotion?.map(tag => (
-              <span key={tag} className="px-2 py-1 bg-white/40 rounded-full text-xs text-gray-600">#{tag}</span>
-            ))}
-          </div>
+      {/* Emotion Tags - Top Center */}
+      {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].emotion && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-40 flex gap-2">
+          {messages[messages.length - 1].emotion?.map(tag => (
+            <span key={tag} className="px-3 py-1.5 bg-white/80 backdrop-blur-xl rounded-full text-xs text-slate-600 shadow-sm border border-white/20">
+              #{tag}
+            </span>
+          ))}
         </div>
-      </header>
+      )}
 
       {/* Chat Area - Add top padding to avoid fixed header */}
       <div className="flex-1 w-full max-w-2xl p-4 pt-24 overflow-y-auto space-y-6 pb-32 scrollbar-hide">
