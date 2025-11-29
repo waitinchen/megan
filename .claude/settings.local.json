@@ -7,7 +7,10 @@
       "Bash(git commit:*)",
       "Bash(cat:*)",
       "Bash(npx tsx:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(tee:*)",
+      "Bash(openssl rand:*)"
     ],
     "deny": [],
     "ask": []
