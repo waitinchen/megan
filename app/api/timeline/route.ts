@@ -73,13 +73,13 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get('userId') || searchParams.get('user');
 
     if (!userId) {
       return fail(ERROR_CODES.VALIDATION_ERROR, 'Missing required parameter: userId');
     }
 
-    // Forward to Cloudflare Worker (note: uses 'user' parameter, not 'userId')
+    // Forward to Cloudflare Worker (uses 'user' parameter)
     const response = await fetch(`${TIMELINE_API_URL}/timeline?user=${encodeURIComponent(userId)}`, {
       method: 'GET',
       headers: {
