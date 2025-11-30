@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     return ok({ conversations: data || [] });
   } catch (error: any) {
     console.error('[API Conversations] GET Error:', error);
-    return serverError(error.message);
+    return serverError(typeof error === 'string' ? error : error?.message || 'Unknown error');
   }
 }
 
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
     return ok({ conversation: finalConversation });
   } catch (error: any) {
     console.error('[API Conversations] POST Error:', error);
-    return serverError(error.message);
+    return serverError(typeof error === 'string' ? error : error?.message || 'Unknown error');
   }
 }
 
@@ -243,6 +243,6 @@ export async function DELETE(request: Request) {
     return ok({ success: true });
   } catch (error: any) {
     console.error('[API Conversations] DELETE Error:', error);
-    return serverError(error.message);
+    return serverError(typeof error === 'string' ? error : error?.message || 'Unknown error');
   }
 }
