@@ -110,3 +110,4 @@ redirectTo: `${window.location.origin}/auth/callback`,
 2. **Google Cloud Console 的變更需要幾分鐘才會生效**
 3. **如果仍有錯誤，檢查瀏覽器 Console 的詳細錯誤訊息**
 
+

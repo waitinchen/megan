@@ -175,3 +175,4 @@ https://tqummhyhohacbkmpsgae.supabase.co/auth/v1/callback
 
 **下一步**：請確認 Supabase 中的 Client Secret 是否正確，然後修正 Google Cloud Console 的端口設定。
 
+

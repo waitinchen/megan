@@ -244,3 +244,4 @@ Client ID: 817238464028-qot5sc882lgp90f8fq5fhk85bni11q27.apps.googleusercontent.
 - Supabase Google Provider 設定頁面的截圖
 - 瀏覽器 Console 的錯誤訊息（F12 → Console）
 
+

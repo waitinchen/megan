@@ -130,8 +130,10 @@ grep -r "req.cookies" app/api/
    pnpm update @supabase/auth-helpers-nextjs @supabase/supabase-js
    ```
 
-3. **檢查中間件**
-   - 確認 `middleware.ts`（如果存在）沒有干擾 cookies
+3. **中間件已移除**
+   - ✅ `middleware.ts` 已移除（使用舊版 Supabase Auth Helper）
+   - ✅ 現在所有 session 驗證都在 API Route Handlers 中處理
+   - ✅ 使用 `createRouteHandlerClient` 代替 `createMiddlewareClient`
 
 ## 參考資料
 

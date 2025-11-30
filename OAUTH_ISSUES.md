@@ -61,3 +61,4 @@ redirectTo: `${window.location.origin}/auth/callback`,
 2. **修正 Google Cloud Console 端口** (優先級: 中)
 3. **確認 Supabase 設定** (優先級: 高)
 
+

@@ -159,3 +159,4 @@ https://tqummhyhohacbkmpsgae.supabase.co/auth/v1/callback
 
 **重要**：如果 Google Cloud Console 中沒有 Supabase 的 callback URL，OAuth 流程會失敗。請務必確認已加入！
 
+

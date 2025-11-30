@@ -222,3 +222,4 @@ fetch('/api/health-check')
 
 **最重要的一點**：確保 Supabase 中的 Client ID 是**完整的 72 個字元**，並且以 `.apps.googleusercontent.com` 結尾！
 
+

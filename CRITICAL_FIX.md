@@ -154,3 +154,4 @@ Callback URL: https://tqummhyhohacbkmpsgae.supabase.co/auth/v1/callback
 
 **請立即檢查 Supabase 中的 Client ID 是否完整，如果不完整，請按照上述步驟修復！**
 
+

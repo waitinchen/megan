@@ -15,3 +15,4 @@ create index if not exists profiles_id_idx on profiles(id);
 create index if not exists profiles_nickname_idx on profiles(nickname);
 
 
+
