@@ -5,7 +5,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { ok, fail, unauthorized, serverError } from '@/app/lib/api/response';
 import { ERROR_CODES } from '@/app/lib/api/errors';
 
-const TIMELINE_API_URL = process.env.NEXT_PUBLIC_TIMELINE_API_URL || '';
+const TIMELINE_API_URL = process.env.NEXT_PUBLIC_TIMELINE_URL || '';
 
 /**
  * POST /api/timeline
