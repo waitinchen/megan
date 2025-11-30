@@ -190,7 +190,7 @@ export default function BindingsPage() {
                   provider.id === 'wechat' ? (
                     <LoginWithWeChatButton 
                       variant="compact" 
-                      text="綁定"
+                      text="綁定（開發中）"
                     />
                   ) : (
                     <button
