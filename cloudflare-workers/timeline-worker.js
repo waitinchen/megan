@@ -1,5 +1,5 @@
 /**
- * Timeline Worker v4 (Simplified Version)
+ * Timeline Worker v4 (Final Version)
  * 
  * Cloudflare Worker for storing conversation timeline events
  * 
@@ -12,58 +12,94 @@
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const path = url.pathname;
+    try {
+      const url = new URL(request.url);
+      const path = url.pathname;
 
-    // POST /timeline
-    if (request.method === "POST" && path === "/timeline") {
-      const body = await request.json().catch(() => null);
+      const headers = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      };
 
-      if (!body || !body.userId || !body.event) {
-        return new Response(JSON.stringify({ error: "Missing fields" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
+      // Preflight
+      if (request.method === "OPTIONS") {
+        return new Response("OK", { status: 200, headers });
+      }
+
+      // ============
+      // 1) POST /timeline
+      // ============
+      if (path === "/timeline" && request.method === "POST") {
+        const body = await request.json();
+        const { userId, event } = body;
+
+        if (!userId || !event) {
+          return new Response(JSON.stringify({ ok: false, error: "Invalid payload" }), {
+            status: 400,
+            headers,
+          });
+        }
+
+        const timestamp = Date.now();
+        const key = `${userId}:${timestamp}`;
+
+        await env.MEGAN_TIMELINE.put(key, JSON.stringify(event), {
+          expirationTtl: 60 * 60 * 24 * 7, // 7 days
+        });
+
+        return new Response(JSON.stringify({ ok: true, saved: { key, timestamp } }), {
+          status: 200,
+          headers,
         });
       }
 
-      const id = `${body.userId}:${Date.now()}`;
-      await env.MEGAN_TIMELINE.put(id, JSON.stringify(body.event), {
-        expirationTtl: 60 * 60 * 24 * 7, // 7 days
-      });
+      // ============
+      // 2) GET /timeline?user=<id>
+      // ============
+      if (path === "/timeline" && request.method === "GET") {
+        const userId = url.searchParams.get("user");
 
-      return new Response(JSON.stringify({ ok: true, id }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+        if (!userId) {
+          return new Response(JSON.stringify({ ok: false, error: "Missing user" }), {
+            status: 400,
+            headers,
+          });
+        }
 
-    // GET /timeline?userId=xxx
-    if (request.method === "GET" && path === "/timeline") {
-      const userId = url.searchParams.get("userId");
+        const list = await env.MEGAN_TIMELINE.list({ prefix: `${userId}:` });
 
-      if (!userId) {
-        return new Response(JSON.stringify({ error: "Missing userId" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
+        const events = [];
+        for (const key of list.keys) {
+          const raw = await env.MEGAN_TIMELINE.get(key.name);
+          if (!raw) continue;
+
+          events.push({
+            key: key.name,
+            timestamp: Number(key.name.split(":")[1]),
+            data: JSON.parse(raw),
+          });
+        }
+
+        events.sort((a, b) => b.timestamp - a.timestamp);
+
+        return new Response(JSON.stringify({ ok: true, events }), {
+          status: 200,
+          headers,
         });
       }
 
-      const prefix = `${userId}:`;
-      const list = await env.MEGAN_TIMELINE.list({ prefix });
-
-      const events = await Promise.all(
-        list.keys.map(async (k) => {
-          const v = await env.MEGAN_TIMELINE.get(k.name);
-          return { id: k.name, event: JSON.parse(v) };
-        })
-      );
-
-      return new Response(JSON.stringify({ events }), {
+      // Default Route
+      return new Response("Megan Timeline API v4 is running.", {
         status: 200,
+        headers,
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ ok: false, error: err.stack }), {
+        status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
-
-    return new Response("Timeline v4 running");
   },
 };

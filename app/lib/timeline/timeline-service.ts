@@ -1,5 +1,5 @@
 /**
- * Timeline Service v4 (Simplified)
+ * Timeline Service v4 (Final Version)
  * 
  * Client-side service for interacting with the Timeline API
  */
@@ -11,20 +11,20 @@ const TIMELINE_API_URL = process.env.NEXT_PUBLIC_TIMELINE_URL || '';
 /**
  * Save a timeline event
  */
-export async function saveTimeline(userId: string, event: TimelineEvent): Promise<{ ok: boolean; id?: string; error?: string }> {
+export async function saveTimeline(userId: string, event: TimelineEvent): Promise<{ ok: boolean; saved?: { key: string; timestamp: number }; error?: string }> {
   try {
     if (!TIMELINE_API_URL) {
       console.warn('[Timeline Service] NEXT_PUBLIC_TIMELINE_URL not configured');
       return { ok: false, error: 'Timeline API URL not configured' };
     }
 
-    const response = await fetch(`${TIMELINE_API_URL}/timeline`, {
+    const res = await fetch(`${TIMELINE_API_URL}/timeline`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, event }),
     });
 
-    return await response.json();
+    return await res.json();
   } catch (error: any) {
     console.error('[Timeline Service] Error saving timeline event:', error);
     return { ok: false, error: error.message };
@@ -34,27 +34,22 @@ export async function saveTimeline(userId: string, event: TimelineEvent): Promis
 /**
  * List all timeline events for a user
  */
-export async function listTimeline(userId: string): Promise<{ events: Array<{ id: string; event: TimelineEvent }> }> {
+export async function listTimeline(userId: string): Promise<{ ok: boolean; events?: Array<{ key: string; timestamp: number; data: TimelineEvent }>; error?: string }> {
   try {
     if (!TIMELINE_API_URL) {
       console.warn('[Timeline Service] NEXT_PUBLIC_TIMELINE_URL not configured');
-      return { events: [] };
+      return { ok: false, error: 'Timeline API URL not configured' };
     }
 
-    const response = await fetch(`${TIMELINE_API_URL}/timeline?userId=${encodeURIComponent(userId)}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+    const res = await fetch(
+      `${TIMELINE_API_URL}/timeline?user=${encodeURIComponent(userId)}`,
+      { method: "GET" }
+    );
 
-    if (!response.ok) {
-      console.error('[Timeline Service] Failed to fetch timeline events');
-      return { events: [] };
-    }
-
-    return await response.json();
-  } catch (error) {
+    return await res.json();
+  } catch (error: any) {
     console.error('[Timeline Service] Error fetching timeline events:', error);
-    return { events: [] };
+    return { ok: false, error: error.message };
   }
 }
 
@@ -77,7 +72,10 @@ export async function saveTimelineEvent(event: TimelineEvent): Promise<boolean> 
  */
 export async function getTimelineEvents(userId: string): Promise<TimelineEvent[]> {
   const result = await listTimeline(userId);
-  return result.events.map(e => e.event);
+  if (!result.ok || !result.events) {
+    return [];
+  }
+  return result.events.map(e => e.data);
 }
 
 /**

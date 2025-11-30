@@ -79,8 +79,8 @@ export async function GET(request: Request) {
       return fail(ERROR_CODES.VALIDATION_ERROR, 'Missing required parameter: userId');
     }
 
-    // Forward to Cloudflare Worker
-    const response = await fetch(`${TIMELINE_API_URL}/timeline?userId=${encodeURIComponent(userId)}`, {
+    // Forward to Cloudflare Worker (note: uses 'user' parameter, not 'userId')
+    const response = await fetch(`${TIMELINE_API_URL}/timeline?user=${encodeURIComponent(userId)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -93,6 +93,7 @@ export async function GET(request: Request) {
     }
 
     const result = await response.json();
+    // Worker returns { ok: true, events: [...] }, each event has { key, timestamp, data }
     return ok(result.events || []);
   } catch (error: any) {
     console.error('[API Timeline] GET Error:', error);
