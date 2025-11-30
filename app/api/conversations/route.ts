@@ -7,8 +7,11 @@ import { ERROR_CODES } from '@/app/lib/api/errors';
 
 export async function GET(request: Request) {
   try {
+    // Ensure cookies are accessed correctly in Next.js App Router
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -73,8 +76,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Ensure cookies are accessed correctly in Next.js App Router
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -194,8 +200,11 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    // Ensure cookies are accessed correctly in Next.js App Router
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
