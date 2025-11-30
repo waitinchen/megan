@@ -62,7 +62,7 @@ export async function GET(request: Request) {
     return ok({ favorites: data || [] });
   } catch (error: any) {
     console.error('[API Favorites] GET Error:', error);
-    return serverError(error.message);
+    return serverError(typeof error === 'string' ? error : error?.message || 'Unknown error');
   }
 }
 
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     return ok({ favorite: data });
   } catch (error: any) {
     console.error('[API Favorites] POST Error:', error);
-    return serverError(error.message);
+    return serverError(typeof error === 'string' ? error : error?.message || 'Unknown error');
   }
 }
 
@@ -154,6 +154,6 @@ export async function DELETE(request: Request) {
     return ok({ success: true });
   } catch (error: any) {
     console.error('[API Favorites] DELETE Error:', error);
-    return serverError(error.message);
+    return serverError(typeof error === 'string' ? error : error?.message || 'Unknown error');
   }
 }
