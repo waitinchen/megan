@@ -85,38 +85,62 @@ function createSessionStorageAdapter() {
  * 
  * 确保在 Client Component 中使用，不要在 Server Component 中使用
  */
+/**
+ * Create browser-compatible cookie storage adapter
+ * This ensures session is stored in cookies, matching server-side expectations
+ */
+function createCookieStorage() {
+  return {
+    getItem: (key: string): string | null => {
+      if (typeof document === 'undefined') return null;
+      const matches = document.cookie.match(new RegExp(
+        '(?:^|; )' + key.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'
+      ));
+      return matches ? decodeURIComponent(matches[1]) : null;
+    },
+    setItem: (key: string, value: string): void => {
+      if (typeof document === 'undefined') return;
+      const maxAge = 60 * 60 * 24 * 365; // 1 year
+      document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    },
+    removeItem: (key: string): void => {
+      if (typeof document === 'undefined') return;
+      document.cookie = `${key}=; path=/; max-age=0`;
+    },
+  };
+}
+
 export function createClient(): SupabaseClient {
   // 如果已经存在实例，直接返回（避免多个实例）
   if (clientInstance) {
     return clientInstance
   }
 
-  // 使用 Supabase 的默认 sessionStorage 行为
-  // 不传递 storage 参数，让 Supabase 自动使用 sessionStorage
-  // 这是最可靠的方式，确保 PKCE code_verifier 正确存储
+  // 使用 cookie-based storage 以匹配服务端期望
+  // 这样客户端和服务端都能访问同一个 session
   clientInstance = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      // 不设置 storage，使用 Supabase 默认的 sessionStorage
-      // 这样可以确保 PKCE code_verifier 在 OAuth redirect 过程中保持可用
+      storage: createCookieStorage(),
+      storageKey: 'sb-tqummhyhohacbkmpsgae-auth-token', // 使用与服务端一致的 key
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
       flowType: 'pkce', // 明确指定使用 PKCE flow
     },
   })
-  
+
   // 添加全局 sessionStorage 监听器用于调试（仅在开发环境）
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     const originalSetItem = Storage.prototype.setItem
-    Storage.prototype.setItem = function(key: string, value: string) {
+    Storage.prototype.setItem = function (key: string, value: string) {
       if (key.includes('pkce') || key.includes('code-verifier')) {
         console.log(`[Supabase Storage] SET: ${key}`, `Value length: ${value.length}`)
       }
       return originalSetItem.call(this, key, value)
     }
-    
+
     const originalGetItem = Storage.prototype.getItem
-    Storage.prototype.getItem = function(key: string) {
+    Storage.prototype.getItem = function (key: string) {
       const value = originalGetItem.call(this, key)
       if (key.includes('pkce') || key.includes('code-verifier')) {
         console.log(`[Supabase Storage] GET: ${key}`, value ? `Found (${value.length} chars)` : 'Not found')
