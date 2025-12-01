@@ -249,20 +249,42 @@ function HomePage() {
           }),
         });
 
+        if (!response.ok) {
+          // 嘗試解析錯誤響應
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          } catch {
+            // 如果無法解析 JSON,使用狀態文本
+            errorMessage = response.statusText || errorMessage;
+          }
+          throw new Error(errorMessage);
+        }
+
         const result = await response.json();
 
-        if (response.ok && result.conversation) {
+        if (result.success !== false && result.data?.conversation) {
+          // 使用新的響應格式 { success: true, data: { conversation: {...} } }
+          if (!currentConversationId) {
+            setCurrentConversationId(result.data.conversation.id);
+            // 更新 URL（不刷新頁面）
+            router.replace(`/?conversation=${result.data.conversation.id}`, { scroll: false });
+          }
+          console.log('[Megan] 💾 對話已保存到資料庫');
+        } else if (result.conversation) {
+          // 兼容舊的響應格式 { conversation: {...} }
           if (!currentConversationId) {
             setCurrentConversationId(result.conversation.id);
-            // 更新 URL（不刷新頁面）
             router.replace(`/?conversation=${result.conversation.id}`, { scroll: false });
           }
           console.log('[Megan] 💾 對話已保存到資料庫');
         } else {
-          console.error('[Megan] 保存對話失敗:', result.error);
+          throw new Error(result.error || '保存失敗: 未知錯誤');
         }
       } catch (error: any) {
-        console.error('[Megan] 保存對話失敗:', error);
+        const errorMessage = error?.message || String(error) || '未知錯誤';
+        console.error('[Megan] 保存對話失敗:', errorMessage);
       }
     }, 2000); // 2 秒延遲
   }
