@@ -7,7 +7,7 @@ const ADMIN_EMAIL = 'waitinchen@gmail.com';
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const supabase = await createSupabaseRouteHandlerClient();
@@ -18,7 +18,7 @@ export async function GET(
             return unauthorized();
         }
 
-        const userId = params.id;
+        const { id: userId } = await params;
 
         // 獲取用戶基本信息
         const { data: profile } = await supabase
