@@ -13,13 +13,33 @@ export default function LoginPage() {
   // Check if already logged in
   useEffect(() => {
     let mounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let checkCompleted = false;
+    
+    // 立即设置超时，确保即使 getUser() 挂起也能退出
+    timeoutId = setTimeout(() => {
+      if (mounted && !checkCompleted) {
+        console.warn('[Login] Check timeout (1.5s), showing login form');
+        checkCompleted = true;
+        setChecking(false);
+      }
+    }, 1500); // 1.5 秒超时
     
     async function checkUser() {
       try {
         const supabase = createClient();
-        const { data, error } = await supabase.auth.getUser();
+        const result = await supabase.auth.getUser();
         
-        if (!mounted) return;
+        if (!mounted || checkCompleted) return;
+        
+        // 清除超时
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        checkCompleted = true;
+        
+        const { data, error } = result;
         
         if (error) {
           console.log('[Login] No user session:', error.message);
@@ -27,32 +47,37 @@ export default function LoginPage() {
           return;
         }
         
-        if (data.user) {
+        if (data?.user) {
+          console.log('[Login] User found, redirecting...');
           router.push('/');
         } else {
+          console.log('[Login] No user, showing login form');
           setChecking(false);
         }
-      } catch (error) {
-        console.error('[Login] Error checking user:', error);
-        if (mounted) {
-          setChecking(false);
+      } catch (error: any) {
+        if (!mounted || checkCompleted) return;
+        
+        console.error('[Login] Error checking user:', error?.message || error);
+        
+        // 清除超时
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
         }
+        checkCompleted = true;
+        setChecking(false);
       }
     }
     
+    // 立即执行检查
     checkUser();
-    
-    // 添加超时保护，避免无限等待
-    const timeout = setTimeout(() => {
-      if (mounted) {
-        console.warn('[Login] Check timeout, showing login form');
-        setChecking(false);
-      }
-    }, 3000);
     
     return () => {
       mounted = false;
-      clearTimeout(timeout);
+      checkCompleted = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [router]);
 
