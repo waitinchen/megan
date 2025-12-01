@@ -31,22 +31,35 @@ interface Favorite {
     created_at: string;
 }
 
-export default function UserDetailPage({ params }: { params: { id: string } }) {
+export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
     const [user, setUser] = useState<UserDetail | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [stats, setStats] = useState({ totalMessages: 0, totalConversations: 0, totalFavorites: 0 });
     const [isLoading, setIsLoading] = useState(true);
+    const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadUserDetail();
-    }, [params.id]);
+        async function unwrapParams() {
+            const { id } = await params;
+            setUserId(id);
+        }
+        unwrapParams();
+    }, []);
+
+    useEffect(() => {
+        if (userId) {
+            loadUserDetail();
+        }
+    }, [userId]);
 
     async function loadUserDetail() {
+        if (!userId) return;
+
         try {
             setIsLoading(true);
-            const response = await fetch(`/api/admin/users/${params.id}`);
+            const response = await fetch(`/api/admin/users/${userId}`);
             const result = await response.json();
 
             if (result.success && result.data) {
