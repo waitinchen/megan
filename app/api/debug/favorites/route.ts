@@ -1,5 +1,6 @@
 /**
  * 診斷 API - 檢查 session 和收藏數據
+ * 公開端點 - 用於調試
  */
 
 import { createSupabaseRouteHandlerClient } from '@/app/lib/supabase-server';
@@ -12,50 +13,37 @@ export async function GET() {
         // 1. 檢查 session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        if (sessionError) {
-            return NextResponse.json({
-                error: 'Session error',
-                details: sessionError.message
-            }, { status: 500 });
+        const hasSession = !!session;
+        const userId = session?.user?.id || null;
+        const userEmail = session?.user?.email || null;
+
+        // 2. 如果有 session,查詢收藏
+        let userFavorites = null;
+        let userError = null;
+
+        if (hasSession && userId) {
+            const result = await supabase
+                .from('favorites')
+                .select('*')
+                .eq('user_id', userId);
+
+            userFavorites = result.data;
+            userError = result.error;
         }
 
-        if (!session) {
-            return NextResponse.json({
-                error: 'No session found',
-                hasSession: false
-            }, { status: 401 });
-        }
-
-        const userId = session.user.id;
-
-        // 2. 直接查詢收藏 (不使用 RLS)
-        const { data: allFavorites, error: allError } = await supabase
-            .from('favorites')
-            .select('*', { count: 'exact' });
-
-        // 3. 使用 RLS 查詢收藏
-        const { data: userFavorites, error: userError } = await supabase
-            .from('favorites')
-            .select('*')
-            .eq('user_id', userId);
-
-        // 4. 返回診斷信息
+        // 3. 返回診斷信息 (不包含敏感數據)
         return NextResponse.json({
             session: {
-                userId: userId,
-                email: session.user.email,
-                hasSession: true
+                hasSession,
+                userId: userId ? `${userId.substring(0, 8)}...` : null,
+                email: userEmail,
+                sessionError: sessionError?.message || null
             },
             favorites: {
-                totalInDatabase: allFavorites?.length || 0,
-                userFavorites: userFavorites?.length || 0,
-                userFavoritesData: userFavorites || [],
-                allFavoritesUserIds: allFavorites?.map(f => f.user_id) || []
-            },
-            errors: {
-                allError: allError?.message || null,
+                userFavoritesCount: userFavorites?.length || 0,
                 userError: userError?.message || null
-            }
+            },
+            timestamp: new Date().toISOString()
         });
 
     } catch (error: any) {
