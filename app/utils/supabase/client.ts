@@ -80,17 +80,38 @@ function createSessionStorageAdapter() {
 /**
  * 创建 Supabase 客户端（浏览器端）
  * 
+/**
+ * Supabase Client for Browser (Client Components)
+ * 
+ * 用于客户端组件中创建 Supabase 客户端
+ * 支持 PKCE OAuth flow，自动处理 sessionStorage
+ * 
+ * 使用单例模式避免多个 GoTrueClient 实例
+ */
+
+import { createClient as createSupabaseClient, SupabaseClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+// 单例客户端实例（避免多个 GoTrueClient 实例警告）
+let clientInstance: SupabaseClient | null = null
+
+/**
+ * 创建 Supabase 客户端（浏览器端）
+ * 
  * 这个客户端会自动使用浏览器的 sessionStorage 来存储 PKCE code_verifier
  * 使用单例模式，确保整个应用只有一个客户端实例
  * 
  * 确保在 Client Component 中使用，不要在 Server Component 中使用
  */
 /**
- * Create browser-compatible cookie storage adapter
- * This ensures session is stored in cookies, matching server-side expectations
+ * Create hybrid storage adapter
+ * - PKCE code_verifier: sessionStorage (OAuth flow only, doesn't need server access)
+ * - Session token: cookies (needs to be sent to server APIs)
  */
-function createCookieStorage() {
-  return {
+function createHybridStorage() {
+  const cookieStorage = {
     getItem: (key: string): string | null => {
       if (typeof document === 'undefined') return null;
       const matches = document.cookie.match(new RegExp(
@@ -108,6 +129,50 @@ function createCookieStorage() {
       document.cookie = `${key}=; path=/; max-age=0`;
     },
   };
+
+  const sessionStorageAdapter = {
+    getItem: (key: string): string | null => {
+      if (typeof window === 'undefined') return null;
+      return window.sessionStorage.getItem(key);
+    },
+    setItem: (key: string, value: string): void => {
+      if (typeof window === 'undefined') return;
+      window.sessionStorage.setItem(key, value);
+    },
+    removeItem: (key: string): void => {
+      if (typeof window === 'undefined') return;
+      window.sessionStorage.removeItem(key);
+    },
+  };
+
+  // Hybrid storage: PKCE in sessionStorage, session token in cookies
+  return {
+    getItem: (key: string): string | null => {
+      // PKCE code_verifier must use sessionStorage
+      if (key.includes('code-verifier') || key.includes('-code-verifier')) {
+        return sessionStorageAdapter.getItem(key);
+      }
+      // Session token uses cookies for server access
+      return cookieStorage.getItem(key);
+    },
+    setItem: (key: string, value: string): void => {
+      // PKCE code_verifier must use sessionStorage
+      if (key.includes('code-verifier') || key.includes('-code-verifier')) {
+        sessionStorageAdapter.setItem(key, value);
+        return;
+      }
+      // Session token uses cookies for server access
+      cookieStorage.setItem(key, value);
+    },
+    removeItem: (key: string): void => {
+      // Try both storages
+      if (key.includes('code-verifier') || key.includes('-code-verifier')) {
+        sessionStorageAdapter.removeItem(key);
+      } else {
+        cookieStorage.removeItem(key);
+      }
+    },
+  };
 }
 
 export function createClient(): SupabaseClient {
@@ -116,16 +181,17 @@ export function createClient(): SupabaseClient {
     return clientInstance
   }
 
-  // 使用 cookie-based storage 以匹配服务端期望
-  // 这样客户端和服务端都能访问同一个 session
+  // 使用混合 storage 策略:
+  // - PKCE code_verifier: sessionStorage (OAuth 流程需要)
+  // - Session token: cookies (API 調用需要)
   clientInstance = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      storage: createCookieStorage(),
-      storageKey: 'sb-tqummhyhohacbkmpsgae-auth-token', // 使用与服务端一致的 key
+      storage: createHybridStorage(),
+      storageKey: 'sb-tqummhyhohacbkmpsgae-auth-token',
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      flowType: 'pkce', // 明确指定使用 PKCE flow
+      flowType: 'pkce',
     },
   })
 
@@ -151,4 +217,3 @@ export function createClient(): SupabaseClient {
 
   return clientInstance
 }
-
