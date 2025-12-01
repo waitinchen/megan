@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createSupabaseRouteHandlerClient } from '@/app/lib/supabase-server';
 
 /**
  * GET /api/user
@@ -10,8 +9,7 @@ import { cookies } from 'next/headers';
  */
 export async function GET() {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createSupabaseRouteHandlerClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -52,8 +50,7 @@ export async function GET() {
  */
 export async function PATCH(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createSupabaseRouteHandlerClient();
 
     const { data: { user } } = await supabase.auth.getUser();
 

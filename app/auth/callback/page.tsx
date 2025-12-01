@@ -18,55 +18,87 @@ export default function AuthCallback() {
       hasExchanged.current = true
 
       try {
-        // Exchange code from URL for session
-        const code = new URL(window.location.href).searchParams.get('code')
+        // 从 URL 获取 code 和可能的错误（使用 window.location 避免 Suspense 问题）
+        const urlParams = new URLSearchParams(window.location.search)
+        const code = urlParams.get('code')
+        const error = urlParams.get('error')
+        const errorDescription = urlParams.get('error_description')
 
-        if (code) {
-          console.log('[OAuth Callback] Exchanging code for session')
-          const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-          if (error) {
-            console.error('[OAuth Callback] Error exchanging code:', error)
-            router.replace('/login?error=exchange_failed')
-            return
-          }
-        }
-
-        // Get the session after exchange
-        const { data, error } = await supabase.auth.getSession()
-
+        // 检查是否有 OAuth 错误
         if (error) {
-          console.error('[OAuth Callback] Error getting session:', error)
-          router.replace('/login?error=session_error')
+          console.error('[OAuth Callback] OAuth error:', error, errorDescription)
+          router.replace(`/login?error=${encodeURIComponent(error)}&details=${encodeURIComponent(errorDescription || '')}`)
           return
         }
 
-        console.log('[OAuth Callback] Session data:', data.session ? 'Session exists' : 'No session')
-
-        if (data.session) {
-          // Check if user has a profile/nickname
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('nickname')
-            .eq('id', data.session.user.id)
-            .single()
-
-          if (profile?.nickname) {
-            // Has nickname → go to dashboard
-            console.log('[OAuth Callback] User has nickname, redirecting to home')
-            router.replace('/')
-          } else {
-            // No nickname → go to welcome page
-            console.log('[OAuth Callback] New user, redirecting to welcome')
-            router.replace('/welcome')
-          }
-        } else {
-          console.warn('[OAuth Callback] No session found, redirecting to login')
-          router.replace('/login')
+        if (!code) {
+          console.error('[OAuth Callback] No code in URL')
+          router.replace('/login?error=no_code')
+          return
         }
-      } catch (error) {
+
+        console.log('[OAuth Callback] Exchanging code for session')
+        
+        // 使用 exchangeCodeForSession，Supabase 会自动处理 PKCE
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (exchangeError) {
+          console.error('[OAuth Callback] Error exchanging code:', exchangeError)
+          
+          // 如果是 PKCE 错误，提供更详细的日志
+          if (exchangeError.message?.includes('code verifier') || exchangeError.message?.includes('non-empty')) {
+            console.error('[OAuth Callback] PKCE error detected')
+            console.error('[OAuth Callback] Possible causes:')
+            console.error('  1. Browser cleared localStorage/sessionStorage during redirect')
+            console.error('  2. Cross-origin redirect issues')
+            console.error('  3. Supabase PKCE configuration issue')
+            console.error('  4. Code verifier not properly stored/retrieved')
+            
+            // 检查 localStorage 中是否有相关数据
+            try {
+              const storageKeys = Object.keys(localStorage)
+              console.log('[OAuth Callback] LocalStorage keys:', storageKeys.filter(k => k.includes('supabase') || k.includes('auth')))
+            } catch (e) {
+              console.warn('[OAuth Callback] Cannot access localStorage:', e)
+            }
+          }
+          
+          router.replace(`/login?error=exchange_failed&details=${encodeURIComponent(exchangeError.message || 'Unknown error')}`)
+          return
+        }
+
+        // 验证 session 是否创建成功
+        if (!data.session) {
+          console.warn('[OAuth Callback] No session after exchange')
+          router.replace('/login?error=no_session')
+          return
+        }
+
+        console.log('[OAuth Callback] Session created successfully for user:', data.session.user.id)
+
+        // 检查用户是否有 profile/nickname
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('nickname')
+          .eq('id', data.session.user.id)
+          .single()
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('[OAuth Callback] Error fetching profile:', profileError)
+          // 继续执行，即使获取 profile 失败
+        }
+
+        if (profile?.nickname) {
+          console.log('[OAuth Callback] User has nickname, redirecting to home')
+          router.replace('/')
+        } else {
+          console.log('[OAuth Callback] New user, redirecting to welcome')
+          router.replace('/welcome')
+        }
+      } catch (error: any) {
         console.error('[OAuth Callback] Unexpected error:', error)
-        router.replace('/login?error=unexpected')
+        console.error('[OAuth Callback] Error stack:', error?.stack)
+        router.replace(`/login?error=unexpected&details=${encodeURIComponent(error?.message || 'Unknown error')}`)
       }
     }
 

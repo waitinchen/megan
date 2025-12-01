@@ -1,14 +1,12 @@
 export const dynamic = 'force-dynamic';
 
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createSupabaseRouteHandlerClient } from '@/app/lib/supabase-server';
 import { ok, fail, unauthorized, serverError } from '@/app/lib/api/response';
 import { ERROR_CODES } from '@/app/lib/api/errors';
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createSupabaseRouteHandlerClient();
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -68,8 +66,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createSupabaseRouteHandlerClient();
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -125,8 +122,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createSupabaseRouteHandlerClient();
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
