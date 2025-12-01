@@ -1,12 +1,12 @@
 "use client";
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/app/utils/supabase/client';
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LoginWithWeChatButton } from '@/components/auth/LoginWithWeChat';
 
 export default function LoginPage() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
