@@ -18,6 +18,11 @@ let clientInstance: SupabaseClient | null = null
 /**
  * 创建自定义 sessionStorage 适配器
  * 确保 PKCE code_verifier 正确存储在 sessionStorage
+ * 
+ * Supabase 期望的存储接口格式：
+ * - getItem(key: string): Promise<string | null> | string | null
+ * - setItem(key: string, value: string): Promise<void> | void
+ * - removeItem(key: string): Promise<void> | void
  */
 function createSessionStorageAdapter() {
   if (typeof window === 'undefined') {
@@ -29,8 +34,8 @@ function createSessionStorageAdapter() {
       try {
         const value = window.sessionStorage.getItem(key)
         // 调试日志：检查 PKCE 相关键
-        if (key.includes('pkce') || key.includes('code-verifier')) {
-          console.log(`[Supabase Storage] Getting PKCE key: ${key}`, value ? 'Found' : 'Not found')
+        if (key.includes('pkce') || key.includes('code-verifier') || key.includes('auth-token')) {
+          console.log(`[Supabase Storage] GET: ${key}`, value ? `Found (${value.length} chars)` : 'Not found')
         }
         return value
       } catch (e) {
@@ -42,19 +47,28 @@ function createSessionStorageAdapter() {
       try {
         window.sessionStorage.setItem(key, value)
         // 调试日志：检查 PKCE 相关键
-        if (key.includes('pkce') || key.includes('code-verifier')) {
-          console.log(`[Supabase Storage] Setting PKCE key: ${key}`, 'Value length:', value.length)
+        if (key.includes('pkce') || key.includes('code-verifier') || key.includes('auth-token')) {
+          console.log(`[Supabase Storage] SET: ${key}`, `Value length: ${value.length}`)
+          // 验证存储成功
+          const stored = window.sessionStorage.getItem(key)
+          if (stored !== value) {
+            console.error(`[Supabase Storage] Storage verification failed for ${key}`)
+          }
         }
       } catch (e) {
         console.warn('[Supabase Storage] Cannot write to sessionStorage:', e)
+        // 检查是否是存储空间不足
+        if (e instanceof DOMException && e.code === 22) {
+          console.error('[Supabase Storage] SessionStorage is full!')
+        }
       }
     },
     removeItem: (key: string): void => {
       try {
         window.sessionStorage.removeItem(key)
         // 调试日志：检查 PKCE 相关键
-        if (key.includes('pkce') || key.includes('code-verifier')) {
-          console.log(`[Supabase Storage] Removing PKCE key: ${key}`)
+        if (key.includes('pkce') || key.includes('code-verifier') || key.includes('auth-token')) {
+          console.log(`[Supabase Storage] REMOVE: ${key}`)
         }
       } catch (e) {
         console.warn('[Supabase Storage] Cannot remove from sessionStorage:', e)
@@ -77,8 +91,29 @@ export function createClient(): SupabaseClient {
     return clientInstance
   }
 
-  // 创建存储适配器
-  const storageAdapter = createSessionStorageAdapter()
+  // 直接使用 sessionStorage（Supabase 会自动处理）
+  // 添加包装器以添加调试日志
+  const storageAdapter = typeof window !== 'undefined' ? {
+    getItem: (key: string) => {
+      const value = window.sessionStorage.getItem(key)
+      if (key.includes('pkce') || key.includes('code-verifier') || key.includes('auth-token')) {
+        console.log(`[Supabase Storage] GET: ${key}`, value ? `Found (${value.length} chars)` : 'Not found')
+      }
+      return value
+    },
+    setItem: (key: string, value: string) => {
+      window.sessionStorage.setItem(key, value)
+      if (key.includes('pkce') || key.includes('code-verifier') || key.includes('auth-token')) {
+        console.log(`[Supabase Storage] SET: ${key}`, `Value length: ${value.length}`)
+      }
+    },
+    removeItem: (key: string) => {
+      window.sessionStorage.removeItem(key)
+      if (key.includes('pkce') || key.includes('code-verifier') || key.includes('auth-token')) {
+        console.log(`[Supabase Storage] REMOVE: ${key}`)
+      }
+    },
+  } : undefined
 
   // 创建客户端实例
   clientInstance = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
