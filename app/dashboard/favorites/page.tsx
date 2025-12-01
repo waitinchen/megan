@@ -39,8 +39,12 @@ export default function FavoritesPage() {
     try {
       const { data: authData } = await supabase.auth.getUser();
 
-      if (!authData.user) return;
+      if (!authData.user) {
+        console.log('[Favorites] 未登入');
+        return;
+      }
 
+      console.log('[Favorites] 當前用戶:', authData.user.id, authData.user.email);
       setIsLoading(true);
 
       // 構建 API URL
@@ -50,13 +54,23 @@ export default function FavoritesPage() {
       }
       params.append('sort', sortOrder);
 
-      const response = await fetch(`/api/favorites?${params.toString()}`);
+      const apiUrl = `/api/favorites?${params.toString()}`;
+      console.log('[Favorites] 調用 API:', apiUrl);
+
+      const response = await fetch(apiUrl);
       const result = await response.json();
+
+      console.log('[Favorites] API 響應:', {
+        status: response.status,
+        ok: response.ok,
+        result: result
+      });
 
       if (!response.ok) {
         throw new Error(result.error || '載入失敗');
       }
 
+      console.log('[Favorites] 收藏數量:', result.favorites?.length || 0);
       setFavorites(result.favorites || []);
       setIsLoading(false);
     } catch (error: any) {
@@ -135,8 +149,8 @@ export default function FavoritesPage() {
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === 'all'
-                  ? 'bg-rose-500 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-rose-500 text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
             >
               全部 ({favorites.length})
@@ -144,8 +158,8 @@ export default function FavoritesPage() {
             <button
               onClick={() => setFilter('text')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === 'text'
-                  ? 'bg-rose-500 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-rose-500 text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
             >
               文字 ({favorites.filter(f => f.type === 'text').length})
@@ -153,8 +167,8 @@ export default function FavoritesPage() {
             <button
               onClick={() => setFilter('audio')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === 'audio'
-                  ? 'bg-rose-500 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-rose-500 text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
             >
               語音 ({favorites.filter(f => f.type === 'audio').length})
@@ -177,8 +191,8 @@ export default function FavoritesPage() {
       {message && (
         <div
           className={`p-4 rounded-lg ${message.type === 'success'
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
+            ? 'bg-green-50 text-green-700 border border-green-200'
+            : 'bg-red-50 text-red-700 border border-red-200'
             }`}
         >
           {message.text}
