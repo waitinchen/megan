@@ -16,6 +16,54 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 let clientInstance: SupabaseClient | null = null
 
 /**
+ * 创建自定义 sessionStorage 适配器
+ * 确保 PKCE code_verifier 正确存储在 sessionStorage
+ */
+function createSessionStorageAdapter() {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+
+  return {
+    getItem: (key: string): string | null => {
+      try {
+        const value = window.sessionStorage.getItem(key)
+        // 调试日志：检查 PKCE 相关键
+        if (key.includes('pkce') || key.includes('code-verifier')) {
+          console.log(`[Supabase Storage] Getting PKCE key: ${key}`, value ? 'Found' : 'Not found')
+        }
+        return value
+      } catch (e) {
+        console.warn('[Supabase Storage] Cannot access sessionStorage:', e)
+        return null
+      }
+    },
+    setItem: (key: string, value: string): void => {
+      try {
+        window.sessionStorage.setItem(key, value)
+        // 调试日志：检查 PKCE 相关键
+        if (key.includes('pkce') || key.includes('code-verifier')) {
+          console.log(`[Supabase Storage] Setting PKCE key: ${key}`, 'Value length:', value.length)
+        }
+      } catch (e) {
+        console.warn('[Supabase Storage] Cannot write to sessionStorage:', e)
+      }
+    },
+    removeItem: (key: string): void => {
+      try {
+        window.sessionStorage.removeItem(key)
+        // 调试日志：检查 PKCE 相关键
+        if (key.includes('pkce') || key.includes('code-verifier')) {
+          console.log(`[Supabase Storage] Removing PKCE key: ${key}`)
+        }
+      } catch (e) {
+        console.warn('[Supabase Storage] Cannot remove from sessionStorage:', e)
+      }
+    },
+  }
+}
+
+/**
  * 创建 Supabase 客户端（浏览器端）
  * 
  * 这个客户端会自动使用浏览器的 sessionStorage 来存储 PKCE code_verifier
@@ -29,31 +77,8 @@ export function createClient(): SupabaseClient {
     return clientInstance
   }
 
-  // 创建自定义存储适配器，使用 sessionStorage
-  const storageAdapter = typeof window !== 'undefined' ? {
-    getItem: (key: string) => {
-      try {
-        return window.sessionStorage.getItem(key)
-      } catch (e) {
-        console.warn('[Supabase Client] Cannot access sessionStorage:', e)
-        return null
-      }
-    },
-    setItem: (key: string, value: string) => {
-      try {
-        window.sessionStorage.setItem(key, value)
-      } catch (e) {
-        console.warn('[Supabase Client] Cannot write to sessionStorage:', e)
-      }
-    },
-    removeItem: (key: string) => {
-      try {
-        window.sessionStorage.removeItem(key)
-      } catch (e) {
-        console.warn('[Supabase Client] Cannot remove from sessionStorage:', e)
-      }
-    },
-  } : undefined
+  // 创建存储适配器
+  const storageAdapter = createSessionStorageAdapter()
 
   // 创建客户端实例
   clientInstance = createSupabaseClient(supabaseUrl, supabaseAnonKey, {

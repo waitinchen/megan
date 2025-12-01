@@ -6,27 +6,60 @@ import { useRouter } from "next/navigation";
 import { LoginWithWeChatButton } from '@/components/auth/LoginWithWeChat';
 
 export default function LoginPage() {
-  const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
   // Check if already logged in
   useEffect(() => {
+    let mounted = true;
+    
     async function checkUser() {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        router.push('/');
-      } else {
-        setChecking(false);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.getUser();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.log('[Login] No user session:', error.message);
+          setChecking(false);
+          return;
+        }
+        
+        if (data.user) {
+          router.push('/');
+        } else {
+          setChecking(false);
+        }
+      } catch (error) {
+        console.error('[Login] Error checking user:', error);
+        if (mounted) {
+          setChecking(false);
+        }
       }
     }
+    
     checkUser();
-  }, [supabase, router]);
+    
+    // 添加超时保护，避免无限等待
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        console.warn('[Login] Check timeout, showing login form');
+        setChecking(false);
+      }
+    }, 3000);
+    
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, [router]);
 
   async function signInWithGoogle() {
     setLoading(true);
 
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
