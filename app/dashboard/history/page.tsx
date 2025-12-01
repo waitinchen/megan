@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Trash2, MessageSquare, Clock } from 'lucide-react';
@@ -16,7 +16,7 @@ interface Conversation {
 }
 
 export default function HistoryPage() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -144,11 +144,10 @@ export default function HistoryPage() {
       {/* Message */}
       {message && (
         <div
-          className={`p-4 rounded-lg ${
-            message.type === 'success'
+          className={`p-4 rounded-lg ${message.type === 'success'
               ? 'bg-green-50 text-green-700 border border-green-200'
               : 'bg-red-50 text-red-700 border border-red-200'
-          }`}
+            }`}
         >
           {message.text}
         </div>

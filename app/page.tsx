@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, Suspense } from "react";
 import { Send, Mic, Volume2, Sparkles, RotateCcw, Download, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/app/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { saveTimeline, createTimelineEventFromMessage } from "@/app/lib/timeline/timeline-service";
 
@@ -44,7 +44,7 @@ interface Message {
 }
 
 function HomePage() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [input, setInput] = useState("");
@@ -897,11 +897,10 @@ function HomePage() {
                     <button
                       onClick={() => handleFavorite(msg, idx)}
                       disabled={favoritingIndex === idx}
-                      className={`p-1.5 rounded-lg hover:bg-white/60 transition-colors disabled:opacity-50 ${
-                        favoritedMessages.has(msg.content)
-                          ? 'text-amber-500'
-                          : 'text-slate-500 hover:text-amber-500'
-                      }`}
+                      className={`p-1.5 rounded-lg hover:bg-white/60 transition-colors disabled:opacity-50 ${favoritedMessages.has(msg.content)
+                        ? 'text-amber-500'
+                        : 'text-slate-500 hover:text-amber-500'
+                        }`}
                       title={favoritedMessages.has(msg.content) ? '已收藏' : '收藏'}
                     >
                       {favoritingIndex === idx ? (
@@ -1117,11 +1116,10 @@ function HomePage() {
           <button
             onClick={handleVoiceInput}
             disabled={isLoading || isListening}
-            className={`p-3 rounded-full transition-all mb-1 ${
-              isListening
-                ? 'bg-red-500 text-white animate-pulse'
-                : 'hover:bg-gray-100 text-gray-500'
-            }`}
+            className={`p-3 rounded-full transition-all mb-1 ${isListening
+              ? 'bg-red-500 text-white animate-pulse'
+              : 'hover:bg-gray-100 text-gray-500'
+              }`}
             title={isListening ? '正在錄音...' : '點擊開始語音輸入'}
           >
             <Mic size={20} />

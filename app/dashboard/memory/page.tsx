@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/app/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 import { getUserMemories, type UserMemory } from '@/app/lib/memory/memory-service';
 
 export default function MemoryPage() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string>('');
   const [memories, setMemories] = useState<UserMemory>({});

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/app/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 import { LoginWithWeChatButton } from '@/components/auth/LoginWithWeChat';
 
 interface Provider {
@@ -13,7 +14,7 @@ interface Provider {
 }
 
 export default function BindingsPage() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
   const [providers, setProviders] = useState<Provider[]>([
     { id: 'google', name: 'Google', icon: '🔵', color: 'blue', isBound: false },
@@ -144,11 +145,10 @@ export default function BindingsPage() {
       {/* Message */}
       {message && (
         <div
-          className={`p-4 rounded-lg ${
-            message.type === 'success'
+          className={`p-4 rounded-lg ${message.type === 'success'
               ? 'bg-green-50 text-green-700 border border-green-200'
               : 'bg-red-50 text-red-700 border border-red-200'
-          }`}
+            }`}
         >
           {message.text}
         </div>
@@ -188,8 +188,8 @@ export default function BindingsPage() {
                   </button>
                 ) : (
                   provider.id === 'wechat' ? (
-                    <LoginWithWeChatButton 
-                      variant="compact" 
+                    <LoginWithWeChatButton
+                      variant="compact"
                       text="綁定（開發中）"
                     />
                   ) : (

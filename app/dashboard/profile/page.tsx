@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -326,11 +326,10 @@ export default function ProfilePage() {
           {/* Success/Error Message */}
           {message && (
             <div
-              className={`p-4 rounded-lg ${
-                message.type === 'success'
+              className={`p-4 rounded-lg ${message.type === 'success'
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-red-50 text-red-700 border border-red-200'
-              }`}
+                }`}
             >
               {message.text}
             </div>
@@ -371,11 +370,10 @@ export default function ProfilePage() {
             />
             <label
               htmlFor="avatar-upload"
-              className={`px-4 py-2 rounded-lg text-sm inline-block transition-all ${
-                isUploadingAvatar
+              className={`px-4 py-2 rounded-lg text-sm inline-block transition-all ${isUploadingAvatar
                   ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                   : 'bg-rose-500 hover:bg-rose-600 text-white cursor-pointer'
-              }`}
+                }`}
             >
               {isUploadingAvatar ? '上傳中...' : '選擇圖片'}
             </label>
