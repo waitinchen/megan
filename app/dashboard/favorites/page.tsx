@@ -70,8 +70,10 @@ export default function FavoritesPage() {
         throw new Error(result.error || '載入失敗');
       }
 
-      console.log('[Favorites] 收藏數量:', result.favorites?.length || 0);
-      setFavorites(result.favorites || []);
+      // 修復: API 返回格式是 { success: true, data: { favorites: [...] } }
+      const favoritesData = result.data?.favorites || result.favorites || [];
+      console.log('[Favorites] 收藏數量:', favoritesData.length);
+      setFavorites(favoritesData);
       setIsLoading(false);
     } catch (error: any) {
       console.error('[Favorites] 載入失敗:', error);
