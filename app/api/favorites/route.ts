@@ -33,13 +33,15 @@ export async function GET(request: Request) {
         return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
       }
 
-      return ok({ 
+      return ok({
         isFavorited: !!data,
         favoriteId: data?.id || null
       });
     }
 
     // 獲取收藏列表
+    console.log('[API Favorites] 獲取收藏列表, userId:', userId);
+
     let query = supabase
       .from('favorites')
       .select('*')
@@ -53,10 +55,18 @@ export async function GET(request: Request) {
 
     const { data, error } = await query;
 
+    console.log('[API Favorites] 查詢結果:', {
+      dataCount: data?.length || 0,
+      error: error?.message || null,
+      userId: userId
+    });
+
     if (error) {
+      console.error('[API Favorites] 資料庫錯誤:', error);
       return fail(ERROR_CODES.DATABASE_ERROR, error.message, 500);
     }
 
+    console.log('[API Favorites] 返回收藏數量:', data?.length || 0);
     return ok({ favorites: data || [] });
   } catch (error: any) {
     console.error('[API Favorites] GET Error:', error);
