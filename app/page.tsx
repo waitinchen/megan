@@ -132,6 +132,30 @@ function HomePage() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [userId, supabase]);
 
+  // End conversation when user closes page or navigates away
+  useEffect(() => {
+    const endConversation = () => {
+      if (currentConversationId && messages.length > 0) {
+        // 使用 sendBeacon 確保請求在頁面卸載時也能發送
+        const blob = new Blob(
+          [JSON.stringify({ conversationId: currentConversationId })],
+          { type: 'application/json' }
+        );
+        navigator.sendBeacon('/api/conversations/end', blob);
+        console.log('[Megan] 📝 對話已標記為結束:', currentConversationId);
+      }
+    };
+
+    // 監聽頁面卸載事件
+    window.addEventListener('beforeunload', endConversation);
+
+    // 組件卸載時也執行
+    return () => {
+      window.removeEventListener('beforeunload', endConversation);
+      endConversation();
+    };
+  }, [currentConversationId, messages.length]);
+
   // Load conversation from URL parameter or localStorage
   useEffect(() => {
     if (isCheckingAuth || !userId || !searchParams) return;
