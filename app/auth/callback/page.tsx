@@ -1,109 +1,97 @@
-'use client'
+"use client"
 
-import { useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/app/utils/supabase/client"
 
 export default function AuthCallback() {
   const router = useRouter()
-  const supabase = createClientComponentClient()
-  const hasExchanged = useRef(false)
 
   useEffect(() => {
-    async function handleOAuth() {
-      if (hasExchanged.current) {
-        console.log('[OAuth Callback] Already handled, skipping')
+    const run = async () => {
+      // 使用 window.location 获取 URL 参数，避免 Suspense 问题
+      const urlParams = new URLSearchParams(window.location.search)
+      const code = urlParams.get("code")
+      const error = urlParams.get("error")
+      const errorDescription = urlParams.get("error_description")
+
+      // 检查是否有 OAuth 错误
+      if (error) {
+        console.error("[OAuth Callback] OAuth error:", error, errorDescription)
+        router.replace(`/login?error=${encodeURIComponent(error)}&details=${encodeURIComponent(errorDescription || "")}`)
         return
       }
-      hasExchanged.current = true
 
-      try {
-        // 从 URL 获取 code 和可能的错误（使用 window.location 避免 Suspense 问题）
-        const urlParams = new URLSearchParams(window.location.search)
-        const code = urlParams.get('code')
-        const error = urlParams.get('error')
-        const errorDescription = urlParams.get('error_description')
+      if (!code) {
+        console.error("[OAuth Callback] No code in URL")
+        router.replace("/login?error=no_code")
+        return
+      }
 
-        // 检查是否有 OAuth 错误
-        if (error) {
-          console.error('[OAuth Callback] OAuth error:', error, errorDescription)
-          router.replace(`/login?error=${encodeURIComponent(error)}&details=${encodeURIComponent(errorDescription || '')}`)
-          return
-        }
+      console.log("[OAuth Callback] Exchanging code for session")
+      
+      const supabase = createClient()
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
-        if (!code) {
-          console.error('[OAuth Callback] No code in URL')
-          router.replace('/login?error=no_code')
-          return
-        }
-
-        console.log('[OAuth Callback] Exchanging code for session')
+      if (exchangeError) {
+        console.error("[OAuth Callback] Error exchanging code:", exchangeError)
         
-        // 使用 exchangeCodeForSession，Supabase 会自动处理 PKCE
-        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-        if (exchangeError) {
-          console.error('[OAuth Callback] Error exchanging code:', exchangeError)
+        // 如果是 PKCE 错误，提供更详细的诊断
+        if (exchangeError.message?.includes("code verifier") || exchangeError.message?.includes("non-empty")) {
+          console.error("[OAuth Callback] PKCE error detected")
+          console.error("[OAuth Callback] Checking sessionStorage for code_verifier...")
           
-          // 如果是 PKCE 错误，提供更详细的日志
-          if (exchangeError.message?.includes('code verifier') || exchangeError.message?.includes('non-empty')) {
-            console.error('[OAuth Callback] PKCE error detected')
-            console.error('[OAuth Callback] Possible causes:')
-            console.error('  1. Browser cleared localStorage/sessionStorage during redirect')
-            console.error('  2. Cross-origin redirect issues')
-            console.error('  3. Supabase PKCE configuration issue')
-            console.error('  4. Code verifier not properly stored/retrieved')
+          try {
+            // 检查 sessionStorage 中是否有 code_verifier
+            const storageKeys = Object.keys(sessionStorage)
+            const pkceKeys = storageKeys.filter(k => k.includes("pkce") || k.includes("code-verifier"))
+            console.log("[OAuth Callback] SessionStorage PKCE keys:", pkceKeys)
             
-            // 检查 localStorage 中是否有相关数据
-            try {
-              const storageKeys = Object.keys(localStorage)
-              console.log('[OAuth Callback] LocalStorage keys:', storageKeys.filter(k => k.includes('supabase') || k.includes('auth')))
-            } catch (e) {
-              console.warn('[OAuth Callback] Cannot access localStorage:', e)
+            if (pkceKeys.length === 0) {
+              console.error("[OAuth Callback] No PKCE keys found in sessionStorage!")
+              console.error("[OAuth Callback] This suggests the code_verifier was not stored or was cleared")
             }
+          } catch (e) {
+            console.warn("[OAuth Callback] Cannot access sessionStorage:", e)
           }
-          
-          router.replace(`/login?error=exchange_failed&details=${encodeURIComponent(exchangeError.message || 'Unknown error')}`)
-          return
         }
+        
+        router.replace(`/login?error=exchange_failed&details=${encodeURIComponent(exchangeError.message || "Unknown error")}`)
+        return
+      }
 
-        // 验证 session 是否创建成功
-        if (!data.session) {
-          console.warn('[OAuth Callback] No session after exchange')
-          router.replace('/login?error=no_session')
-          return
-        }
+      // 验证 session 是否创建成功
+      if (!data.session) {
+        console.warn("[OAuth Callback] No session after exchange")
+        router.replace("/login?error=no_session")
+        return
+      }
 
-        console.log('[OAuth Callback] Session created successfully for user:', data.session.user.id)
+      console.log("[OAuth Callback] Session created successfully for user:", data.session.user.id)
 
-        // 检查用户是否有 profile/nickname
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('nickname')
-          .eq('id', data.session.user.id)
-          .single()
+      // 检查用户是否有 profile/nickname
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("nickname")
+        .eq("id", data.session.user.id)
+        .single()
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('[OAuth Callback] Error fetching profile:', profileError)
-          // 继续执行，即使获取 profile 失败
-        }
+      if (profileError && profileError.code !== "PGRST116") {
+        console.error("[OAuth Callback] Error fetching profile:", profileError)
+        // 继续执行，即使获取 profile 失败
+      }
 
-        if (profile?.nickname) {
-          console.log('[OAuth Callback] User has nickname, redirecting to home')
-          router.replace('/')
-        } else {
-          console.log('[OAuth Callback] New user, redirecting to welcome')
-          router.replace('/welcome')
-        }
-      } catch (error: any) {
-        console.error('[OAuth Callback] Unexpected error:', error)
-        console.error('[OAuth Callback] Error stack:', error?.stack)
-        router.replace(`/login?error=unexpected&details=${encodeURIComponent(error?.message || 'Unknown error')}`)
+      if (profile?.nickname) {
+        console.log("[OAuth Callback] User has nickname, redirecting to home")
+        router.replace("/")
+      } else {
+        console.log("[OAuth Callback] New user, redirecting to welcome")
+        router.replace("/welcome")
       }
     }
 
-    handleOAuth()
-  }, [router, supabase])
+    run()
+  }, [router])
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-rose-50 via-purple-50 to-blue-50">
