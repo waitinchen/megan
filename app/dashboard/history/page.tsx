@@ -241,9 +241,11 @@ export default function HistoryPage() {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <MessageSquare className="text-rose-500" size={20} />
-                  <h3 className="font-semibold text-slate-800">
-                    {conversation.title || '無標題對話'}
-                  </h3>
+                  {conversation.title && (
+                    <h3 className="font-semibold text-slate-800">
+                      {conversation.title}
+                    </h3>
+                  )}
                 </div>
 
                 <p className="text-slate-600 text-sm mb-3 line-clamp-2">
