@@ -19,13 +19,34 @@ export default function HistoryPage() {
   const supabase = createClient();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const LIMIT = 24; // 每次加載 24 個對話
 
   useEffect(() => {
     loadConversations();
   }, []);
+
+  // 監聽滾動事件
+  useEffect(() => {
+    function handleScroll() {
+      // 檢查是否滾動到底部
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+
+      if (scrollTop + clientHeight >= scrollHeight - 100 && !isLoadingMore && hasMore) {
+        loadMoreConversations();
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, hasMore, page]);
 
   async function loadConversations() {
     try {
@@ -37,7 +58,7 @@ export default function HistoryPage() {
       }
 
       setIsLoading(true);
-      const response = await fetch('/api/conversations');
+      const response = await fetch(`/api/conversations?limit=${LIMIT}&offset=0`);
       const result = await response.json();
 
       if (!response.ok) {
@@ -45,12 +66,41 @@ export default function HistoryPage() {
       }
 
       // API 使用統一響應格式: { success: true, data: { conversations: [...] } }
-      setConversations(result.data?.conversations || []);
+      const loadedConversations = result.data?.conversations || [];
+      setConversations(loadedConversations);
+      setHasMore(loadedConversations.length === LIMIT);
+      setPage(1);
       setIsLoading(false);
     } catch (error: any) {
       console.error('[History] 載入失敗:', error);
       setMessage({ type: 'error', text: `載入失敗: ${error.message}` });
       setIsLoading(false);
+    }
+  }
+
+  async function loadMoreConversations() {
+    if (isLoadingMore || !hasMore) return;
+
+    try {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const offset = page * LIMIT;
+
+      const response = await fetch(`/api/conversations?limit=${LIMIT}&offset=${offset}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || '載入失敗');
+      }
+
+      const newConversations = result.data?.conversations || [];
+      setConversations(prev => [...prev, ...newConversations]);
+      setHasMore(newConversations.length === LIMIT);
+      setPage(nextPage);
+      setIsLoadingMore(false);
+    } catch (error: any) {
+      console.error('[History] 載入更多失敗:', error);
+      setIsLoadingMore(false);
     }
   }
 
@@ -226,6 +276,23 @@ export default function HistoryPage() {
           </div>
         ))}
       </div>
+
+      {/* Loading More Indicator */}
+      {isLoadingMore && (
+        <div className="flex justify-center py-8">
+          <div className="flex items-center gap-3 text-slate-600">
+            <div className="w-6 h-6 border-3 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+            <span>載入更多對話...</span>
+          </div>
+        </div>
+      )}
+
+      {/* No More Data */}
+      {!hasMore && conversations.length > 0 && (
+        <div className="text-center py-8 text-slate-500 text-sm">
+          已載入所有對話
+        </div>
+      )}
     </div>
   );
 }
