@@ -1,0 +1,13 @@
+2025-12-01T10:09:23.000000000Z [inf]  Starting Container
+2025-12-01T10:09:23.886871880Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-01T10:09:23.886879171Z [inf]  
+2025-12-01T10:09:23.886885704Z [inf]  > temp_app@0.1.3 start
+2025-12-01T10:09:23.886892499Z [inf]  > next start
+2025-12-01T10:09:23.886899181Z [inf]  
+2025-12-01T10:09:24.039152902Z [inf]     ▲ Next.js 16.0.3
+2025-12-01T10:09:24.039159891Z [inf]     - Local:         http://localhost:8080
+2025-12-01T10:09:24.039166241Z [inf]     - Network:       http://10.195.24.26:8080
+2025-12-01T10:09:24.039172789Z [inf]  
+2025-12-01T10:09:24.039178722Z [inf]   ✓ Starting...
+2025-12-01T10:09:24.877435615Z [err]  [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+2025-12-01T10:09:24.877442400Z [inf]   ✓ Ready in 692ms

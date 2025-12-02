@@ -152,3 +152,8 @@ Client Secret: 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 (新的)
 **下一步**：請在 Supabase Dashboard 中更新 Client Secret，然後等待 5-10 分鐘再測試。
 
 
+
+
+
+
+

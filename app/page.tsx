@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/app/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { saveTimeline, createTimelineEventFromMessage } from "@/app/lib/timeline/timeline-service";
+import { useMemoryAutoExtract } from "@/app/hooks/useMemoryAutoExtract";
 
 // Emotion to Color Mapping
 const emotionColors: Record<string, string> = {
@@ -68,6 +69,13 @@ function HomePage() {
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const saveConversationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 自動記憶提取
+  useMemoryAutoExtract({
+    conversationId: currentConversationId,
+    messages,
+    enabled: true,
+  });
 
   // Check authentication and nickname on mount
   useEffect(() => {

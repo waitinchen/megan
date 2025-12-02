@@ -187,3 +187,8 @@ https://tqummhyhohacbkmpsgae.supabase.co/auth/v1/callback
 完成以上設定後，"invalid_client" 錯誤應該就會解決了！🎉
 
 
+
+
+
+
+
