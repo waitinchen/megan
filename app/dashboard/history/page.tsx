@@ -44,7 +44,8 @@ export default function HistoryPage() {
         throw new Error(result.error || '載入失敗');
       }
 
-      setConversations(result.conversations || []);
+      // API 使用統一響應格式: { success: true, data: { conversations: [...] } }
+      setConversations(result.data?.conversations || []);
       setIsLoading(false);
     } catch (error: any) {
       console.error('[History] 載入失敗:', error);
@@ -145,8 +146,8 @@ export default function HistoryPage() {
       {message && (
         <div
           className={`p-4 rounded-lg ${message.type === 'success'
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
+            ? 'bg-green-50 text-green-700 border border-green-200'
+            : 'bg-red-50 text-red-700 border border-red-200'
             }`}
         >
           {message.text}
