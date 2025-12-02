@@ -73,7 +73,10 @@ export async function calculateUserAffinityScore(
             .select('id, message_count')
             .eq('user_id', userId);
 
-        const totalMessages = conversations?.reduce((sum, c) => sum + (c.message_count || 0), 0) || 0;
+        const totalMessages = conversations?.reduce(
+            (sum: number, c: { message_count?: number }) => sum + (c.message_count || 0),
+            0
+        ) || 0;
 
         // 3. 計算活躍天數
         const createdAt = new Date(profile.created_at);
