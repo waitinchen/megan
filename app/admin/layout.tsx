@@ -25,7 +25,8 @@ export default function AdminLayout({
 
                 if (!user || user.email !== ADMIN_EMAIL) {
                     console.log('[Admin] 未授權訪問,重定向到首頁');
-                    router.push('/');
+                    // 立即重定向
+                    window.location.href = '/';
                     return;
                 }
 
@@ -33,19 +34,21 @@ export default function AdminLayout({
                 setIsLoading(false);
             } catch (error) {
                 console.error('[Admin] 認證檢查失敗:', error);
-                router.push('/');
+                // 立即重定向
+                window.location.href = '/';
             }
         }
 
         checkAdmin();
-    }, [supabase, router]);
+    }, [supabase]);
 
     async function handleLogout() {
         await supabase.auth.signOut();
-        router.push('/');
+        window.location.href = '/';
     }
 
-    if (isLoading) {
+    // 如果正在載入或非管理員,顯示載入畫面
+    if (isLoading || !userEmail) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
                 <div className="text-slate-600">驗證管理員權限...</div>
