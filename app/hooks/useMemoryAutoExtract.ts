@@ -3,7 +3,7 @@
  * 自動記憶提取 - 在對話結束時觸發
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -23,6 +23,8 @@ export function useMemoryAutoExtract({
 }: UseMemoryAutoExtractOptions) {
     const lastExtractTimeRef = useRef<number>(0);
     const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [countdown, setCountdown] = useState(0);
+    const [isExtracting, setIsExtracting] = useState(false);
 
     // 提取記憶函數
     const extractMemory = () => {
@@ -37,6 +39,8 @@ export function useMemoryAutoExtract({
         }
 
         lastExtractTimeRef.current = now;
+        setIsExtracting(true);
+        setCountdown(0);
 
         // 只發送最後 20 則訊息
         const recentMessages = messages.slice(-20);
@@ -83,6 +87,10 @@ export function useMemoryAutoExtract({
 
         // 設置新的計時器
         if (conversationId && messages.length >= 5 && enabled) {
+            // 開始倒數
+            setCountdown(30);
+            setIsExtracting(false);
+
             inactivityTimerRef.current = setTimeout(() => {
                 console.log('[Memory Auto Extract] 30 秒無活動,觸發提取');
                 extractMemory();
@@ -96,10 +104,33 @@ export function useMemoryAutoExtract({
         };
     }, [messages.length, conversationId, enabled]);
 
-    // 3. 組件卸載時提取
+    // 3. 倒數計時邏輯
+    useEffect(() => {
+        if (countdown > 0) {
+            const timer = setTimeout(() => {
+                setCountdown(countdown - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [countdown]);
+
+    // 4. 組件卸載時提取
     useEffect(() => {
         return () => {
             extractMemory();
         };
     }, []);
+
+    // 返回倒數和提取狀態供 UI 使用
+    return {
+        countdown,
+        isExtracting,
+        cancelExtraction: () => {
+            setCountdown(0);
+            setIsExtracting(false);
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
+            }
+        },
+    };
 }
