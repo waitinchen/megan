@@ -6,11 +6,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { UserMemory } from './memory-service';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
-
 export interface Message {
     role: 'user' | 'assistant';
     content: string;
+}
+
+/**
+ * Get GoogleGenerativeAI instance with API key
+ */
+function getGenAI() {
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+
+    if (!apiKey) {
+        throw new Error('[LLM Analyzer] GOOGLE_API_KEY not found in environment variables');
+    }
+
+    console.log('[LLM Analyzer] Using API Key:', apiKey.substring(0, 20) + '...');
+    return new GoogleGenerativeAI(apiKey);
 }
 
 /**
@@ -21,6 +33,7 @@ export async function analyzeConversationWithLLM(
     existingMemories: UserMemory
 ): Promise<Partial<UserMemory>> {
     try {
+        const genAI = getGenAI();
         const model = genAI.getGenerativeModel({
             model: 'gemini-2.0-flash-exp',
             generationConfig: {

@@ -52,10 +52,17 @@ export async function saveMemory(key: string, value: any): Promise<{ ok: boolean
     const response = await fetch(`${MEMORY_API_URL}/memory`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value: typeof value === 'string' ? value : JSON.stringify(value) }),
+      body: JSON.stringify({ key, value }), // Worker handles JSON encoding
     });
 
-    return await response.json();
+    const result = await response.json();
+
+    // Worker returns {status: "saved", key, value} on success
+    if (result.status === 'saved' || result.ok === true) {
+      return { ok: true, stored: result };
+    }
+
+    return { ok: false, error: result.error || 'Unknown error' };
   } catch (error: any) {
     console.error('[Memory Service v5] Error saving memory:', error);
     return { ok: false, error: error.message };
@@ -72,7 +79,17 @@ export async function loadMemory(key: string): Promise<{ key: string; value: str
       headers: { "Content-Type": "application/json" },
     });
 
-    return await response.json();
+    const result = await response.json();
+
+    // Handle Cloudflare KV error responses (e.g., "（沒有資料）")
+    if (result.value && typeof result.value === 'string') {
+      // Check for Chinese error messages or other non-JSON strings
+      if (result.value.includes('沒有資料') || result.value.includes('no data')) {
+        return { key, value: null };
+      }
+    }
+
+    return result;
   } catch (error: any) {
     console.error('[Memory Service v5] Error loading memory:', error);
     return { key, value: null };
@@ -95,16 +112,14 @@ export async function getUserMemoryByCategory(
 ): Promise<any> {
   const key = buildMemoryKey(userId, category);
   const result = await loadMemory(key);
-  
-  if (!result.value) {
+
+  // Handle null, undefined, or empty values
+  if (!result.value || result.value === '' || result.value === 'null') {
     return null;
   }
 
-  try {
-    return JSON.parse(result.value);
-  } catch {
-    return result.value; // If not JSON, return as string
-  }
+  // Worker already returns parsed value, no need to JSON.parse again
+  return result.value;
 }
 
 /**
