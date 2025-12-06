@@ -14,8 +14,8 @@ export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return unauthorized();
     }
 
@@ -60,8 +60,8 @@ export async function GET(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return unauthorized();
     }
 

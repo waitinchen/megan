@@ -12,9 +12,9 @@ export async function POST(request: Request) {
         const supabase = await createSupabaseRouteHandlerClient();
 
         // 驗證用戶認證
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!session) {
+        if (authError || !user) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
             .from('conversations')
             .update({ ended_at: new Date().toISOString() })
             .eq('id', conversationId)
-            .eq('user_id', session.user.id); // 確保只能結束自己的對話
+            .eq('user_id', user.id); // 確保只能結束自己的對話
 
         if (error) {
             console.error('[API End Conversation] 設置結束時間失敗:', error);

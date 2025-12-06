@@ -8,12 +8,13 @@ export async function GET(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return unauthorized();
-    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const userId = session.user.id;
+        if (authError || !user) {
+            return unauthorized();
+        }
+
+        const userId = user.id;
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('id');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -73,12 +74,13 @@ export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return unauthorized();
-    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const userId = session.user.id;
+        if (authError || !user) {
+            return unauthorized();
+        }
+
+        const userId = user.id;
     const body = await request.json();
     const { conversationId, title, messages } = body;
 
@@ -193,12 +195,13 @@ export async function DELETE(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return unauthorized();
-    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const userId = session.user.id;
+        if (authError || !user) {
+            return unauthorized();
+        }
+
+        const userId = user.id;
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('id');
 

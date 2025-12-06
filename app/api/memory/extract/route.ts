@@ -13,13 +13,13 @@ import { updateUserAffinityScore } from '@/app/lib/memory/score-calculator';
 export async function POST(request: Request) {
     try {
         const supabase = await createSupabaseRouteHandlerClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!session) {
+        if (authError || !user) {
             return unauthorized();
         }
 
-        const userId = session.user.id;
+        const userId = user.id;
         const { conversationId, messages } = await request.json();
 
         // 驗證輸入

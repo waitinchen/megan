@@ -8,12 +8,13 @@ export async function GET(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return unauthorized();
-    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const userId = session.user.id;
+        if (authError || !user) {
+            return unauthorized();
+        }
+
+        const userId = user.id;
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const sort = searchParams.get('sort') || 'desc';
@@ -78,12 +79,13 @@ export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return unauthorized();
-    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const userId = session.user.id;
+        if (authError || !user) {
+            return unauthorized();
+        }
+
+        const userId = user.id;
     const body = await request.json();
     const { type, content, audio_url } = body;
 
@@ -134,12 +136,13 @@ export async function DELETE(request: Request) {
   try {
     const supabase = await createSupabaseRouteHandlerClient();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      return unauthorized();
-    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const userId = session.user.id;
+        if (authError || !user) {
+            return unauthorized();
+        }
+
+        const userId = user.id;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

@@ -12,13 +12,13 @@ import { updateUserAffinityScore } from '@/app/lib/memory/score-calculator';
 export async function GET(request: Request) {
     try {
         const supabase = await createSupabaseRouteHandlerClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!session) {
+        if (authError || !user) {
             return unauthorized();
         }
 
-        const userId = session.user.id;
+        const userId = user.id;
 
         // 獲取記憶數據
         const memories = await getUserMemories(userId);
@@ -47,13 +47,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const supabase = await createSupabaseRouteHandlerClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!session) {
+        if (authError || !user) {
             return unauthorized();
         }
 
-        const userId = session.user.id;
+        const userId = user.id;
         const { type, data } = await request.json();
 
         // 驗證類型
@@ -91,13 +91,13 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const supabase = await createSupabaseRouteHandlerClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (!session) {
+        if (authError || !user) {
             return unauthorized();
         }
 
-        const userId = session.user.id;
+        const userId = user.id;
         const { memories } = await request.json();
 
         // 獲取現有記憶
