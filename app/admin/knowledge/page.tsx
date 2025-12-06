@@ -106,7 +106,7 @@ export default function KnowledgePage() {
                         <select
                             value={newItem.category}
                             onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-700"
                         >
                             <option value="general">一般知識</option>
                             <option value="personality">人格特質</option>
@@ -122,7 +122,7 @@ export default function KnowledgePage() {
                             type="text"
                             value={newItem.title}
                             onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-700 placeholder:text-slate-400"
                             placeholder="輸入知識標題..."
                         />
                     </div>
@@ -133,7 +133,7 @@ export default function KnowledgePage() {
                         <textarea
                             value={newItem.content}
                             onChange={(e) => setNewItem({ ...newItem, content: e.target.value })}
-                            className="w-full h-32 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
+                            className="w-full h-32 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none text-slate-700 placeholder:text-slate-400"
                             placeholder="輸入知識內容..."
                         />
                     </div>
