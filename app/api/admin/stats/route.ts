@@ -31,11 +31,16 @@ async function getAdminStats(supabase: any) {
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-    // 2. 活躍用戶 (最近 7 天有對話)
-    const { count: activeUsers } = await supabase
+    // 2. 活躍用戶 (最近 7 天有對話的唯一用戶數)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: activeUsersData } = await supabase
         .from('conversations')
-        .select('user_id', { count: 'exact', head: true })
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+        .select('user_id')
+        .gte('created_at', sevenDaysAgo);
+
+    // 計算唯一用戶數
+    const uniqueUserIds = new Set(activeUsersData?.map((c: { user_id: string }) => c.user_id) || []);
+    const activeUsers = uniqueUserIds.size;
 
     // 3. 總對話數
     const { count: totalConversations } = await supabase
@@ -70,7 +75,7 @@ async function getAdminStats(supabase: any) {
 
     return {
         totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
+        activeUsers: activeUsers,
         totalConversations: totalConversations || 0,
         totalMessages: totalMessages || 0,
         avgMessageCount: Math.round(avgMessageCount * 10) / 10,
