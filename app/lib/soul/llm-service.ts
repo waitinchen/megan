@@ -1,13 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { SYSTEM_PROMPT } from './system-prompt';
+import { getSystemPrompt } from './get-system-prompt';
 import { inferEmotionTags } from './emotion-tags';
 
 // Initialize Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
-const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
-    systemInstruction: SYSTEM_PROMPT,
-});
+
+// Note: Model will be created with dynamic system prompt in generateResponse function
 
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
@@ -33,6 +31,16 @@ export async function generateResponse(
     memoryContext: string = ''
 ): Promise<LLMResponse> {
     try {
+        // 0. Get current System Prompt from database
+        const systemPrompt = await getSystemPrompt();
+        console.log(`[LLM Service] 📜 System Prompt loaded: ${systemPrompt.substring(0, 100)}...`);
+
+        // Create model with dynamic system prompt
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.0-flash-exp',
+            systemInstruction: systemPrompt,
+        });
+
         // 1. Prepare history for Gemini
         // Filter out system messages from input history
         const userMessages = history.filter(msg => msg.role !== 'system');
