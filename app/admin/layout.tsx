@@ -99,7 +99,18 @@ export default function AdminLayout({
                         >
                             總覽
                         </Link>
-                        {/* 未來可以添加更多導航項 */}
+                        <Link
+                            href="/admin/personality"
+                            className="flex items-center px-3 border-b-2 border-transparent hover:border-rose-300 hover:text-rose-600 text-slate-600 font-medium text-sm transition-colors"
+                        >
+                            人格
+                        </Link>
+                        <Link
+                            href="/admin/knowledge"
+                            className="flex items-center px-3 border-b-2 border-transparent hover:border-rose-300 hover:text-rose-600 text-slate-600 font-medium text-sm transition-colors"
+                        >
+                            知識
+                        </Link>
                     </div>
                 </div>
             </nav>
