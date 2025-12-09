@@ -66,6 +66,7 @@ function HomePage() {
   const [favoriteMessage, setFavoriteMessage] = useState<string | null>(null);
   const [favoritedMessages, setFavoritedMessages] = useState<Set<string>>(new Set()); // 儲存已收藏的內容
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null); // 當前對話 ID
+  const [isGuest, setIsGuest] = useState(false); // 是否為訪客模式
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const saveConversationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -81,6 +82,27 @@ function HomePage() {
   useEffect(() => {
     async function checkAuth() {
       try {
+        // 首先檢查是否有訪客 session
+        const guestSessionStr = localStorage.getItem('guest_session');
+        if (guestSessionStr) {
+          try {
+            const guestSession = JSON.parse(guestSessionStr);
+            if (guestSession.isGuest && guestSession.userId && guestSession.nickname) {
+              console.log('[Megan] 檢測到訪客 session');
+              setNickname(guestSession.nickname);
+              setUserId(guestSession.userId);
+              setIsGuest(true);
+              setIsCheckingAuth(false);
+              setIsConnected(true);
+              return;
+            }
+          } catch (e) {
+            console.error('[Megan] 訪客 session 解析失敗:', e);
+            localStorage.removeItem('guest_session');
+          }
+        }
+
+        // 如果不是訪客，檢查 Supabase 認證
         const { data: authData } = await supabase.auth.getUser();
 
         if (!authData.user) {
@@ -106,6 +128,7 @@ function HomePage() {
         setNickname(profile.nickname);
         setAvatarUrl(profile.avatar_url);
         setUserId(authData.user.id);
+        setIsGuest(false);
         setIsCheckingAuth(false);
         setIsConnected(true);
       } catch (error) {
@@ -649,7 +672,15 @@ function HomePage() {
   // Handle logout
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      if (isGuest) {
+        // 訪客登出：清除 localStorage
+        localStorage.removeItem('guest_session');
+        localStorage.removeItem('megan_conversation_history');
+        console.log('[Megan] 訪客登出成功');
+      } else {
+        // 正式用戶登出：使用 Supabase
+        await supabase.auth.signOut();
+      }
       router.push('/login');
     } catch (error) {
       console.error('[Megan] 登出失敗:', error);
@@ -672,7 +703,7 @@ function HomePage() {
   // 載入已收藏的訊息列表
   useEffect(() => {
     async function loadFavoritedMessages() {
-      if (!userId) return;
+      if (!userId || isGuest) return; // 訪客不載入收藏列表
       try {
         const response = await fetch('/api/favorites');
         const data = await response.json();
@@ -687,12 +718,18 @@ function HomePage() {
     if (!isCheckingAuth) {
       loadFavoritedMessages();
     }
-  }, [userId, isCheckingAuth]);
+  }, [userId, isCheckingAuth, isGuest]);
 
   // Handle favorite message
   const handleFavorite = async (message: Message, index: number) => {
     if (!userId) {
       setFavoriteMessage('請先登入');
+      return;
+    }
+
+    // 訪客限制檢查
+    if (isGuest) {
+      setFavoriteMessage('⚠️ 遊客狀態不支持此功能');
       return;
     }
 
@@ -844,37 +881,65 @@ function HomePage() {
               </div>
 
               {/* Menu Items */}
-              <a
-                href="/dashboard/profile"
-                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    alert('⚠️ 遊客狀態不支持此功能\n\n請使用 Google 帳號登入以使用完整功能');
+                  } else {
+                    window.location.href = '/dashboard/profile';
+                  }
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all w-full text-left"
               >
                 <span className="text-lg">👤</span>
                 <span className="text-sm font-medium">個人資料</span>
-              </a>
+                {isGuest && <span className="ml-auto text-xs text-slate-400">🔒</span>}
+              </button>
 
-              <a
-                href="/dashboard/memory"
-                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    alert('⚠️ 遊客狀態不支持此功能\n\n請使用 Google 帳號登入以使用完整功能');
+                  } else {
+                    window.location.href = '/dashboard/memory';
+                  }
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all w-full text-left"
               >
                 <span className="text-lg">🧠</span>
                 <span className="text-sm font-medium">默契記憶</span>
-              </a>
+                {isGuest && <span className="ml-auto text-xs text-slate-400">🔒</span>}
+              </button>
 
-              <a
-                href="/dashboard/favorites"
-                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    alert('⚠️ 遊客狀態不支持此功能\n\n請使用 Google 帳號登入以使用完整功能');
+                  } else {
+                    window.location.href = '/dashboard/favorites';
+                  }
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all w-full text-left"
               >
                 <span className="text-lg">⭐</span>
                 <span className="text-sm font-medium">收藏對話</span>
-              </a>
+                {isGuest && <span className="ml-auto text-xs text-slate-400">🔒</span>}
+              </button>
 
-              <a
-                href="/dashboard/bindings"
-                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all"
+              <button
+                onClick={() => {
+                  if (isGuest) {
+                    alert('⚠️ 遊客狀態不支持此功能\n\n請使用 Google 帳號登入以使用完整功能');
+                  } else {
+                    window.location.href = '/dashboard/bindings';
+                  }
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 transition-all w-full text-left"
               >
                 <span className="text-lg">🔗</span>
                 <span className="text-sm font-medium">帳號綁定</span>
-              </a>
+                {isGuest && <span className="ml-auto text-xs text-slate-400">🔒</span>}
+              </button>
 
               <div className="border-t border-slate-200 my-2"></div>
 

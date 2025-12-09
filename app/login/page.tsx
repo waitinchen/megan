@@ -9,13 +9,17 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [guestUsername, setGuestUsername] = useState('');
+  const [guestPassword, setGuestPassword] = useState('');
+  const [guestLoading, setGuestLoading] = useState(false);
+  const [guestError, setGuestError] = useState('');
 
   // Check if already logged in
   useEffect(() => {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let checkCompleted = false;
-    
+
     // 立即设置超时，确保即使 getUser() 挂起也能退出
     timeoutId = setTimeout(() => {
       if (mounted && !checkCompleted) {
@@ -24,29 +28,29 @@ export default function LoginPage() {
         setChecking(false);
       }
     }, 1500); // 1.5 秒超时
-    
+
     async function checkUser() {
       try {
         const supabase = createClient();
         const result = await supabase.auth.getUser();
-        
+
         if (!mounted || checkCompleted) return;
-        
+
         // 清除超时
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
         checkCompleted = true;
-        
+
         const { data, error } = result;
-        
+
         if (error) {
           console.log('[Login] No user session:', error.message);
           setChecking(false);
           return;
         }
-        
+
         if (data?.user) {
           console.log('[Login] User found, redirecting...');
           router.push('/');
@@ -56,9 +60,9 @@ export default function LoginPage() {
         }
       } catch (error: any) {
         if (!mounted || checkCompleted) return;
-        
+
         console.error('[Login] Error checking user:', error?.message || error);
-        
+
         // 清除超时
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -68,10 +72,10 @@ export default function LoginPage() {
         setChecking(false);
       }
     }
-    
+
     // 立即执行检查
     checkUser();
-    
+
     return () => {
       mounted = false;
       checkCompleted = true;
@@ -95,10 +99,10 @@ export default function LoginPage() {
     if (error) {
       console.error("Google Login Error:", error);
       setLoading(false);
-      
+
       // 提供更詳細的錯誤訊息
       let errorMessage = '登入失敗，請稍後再試';
-      
+
       if (error.message?.includes('invalid_client') || error.message?.includes('401')) {
         errorMessage = 'OAuth 設定錯誤：請檢查 Supabase Dashboard 中的 Google Provider 設定\n\n' +
           '常見問題：\n' +
@@ -106,8 +110,49 @@ export default function LoginPage() {
           '2. Client Secret 與 Google Cloud Console 不匹配\n' +
           '3. 請參考 FINAL_FIX_INVALID_CLIENT.md 進行檢查';
       }
-      
+
       alert(errorMessage);
+    }
+  }
+
+  async function handleGuestLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setGuestError('');
+    setGuestLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/guest-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: guestUsername,
+          password: guestPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setGuestError(data.error || '登入失敗');
+        setGuestLoading(false);
+        return;
+      }
+
+      // 儲存訪客 session 到 localStorage
+      localStorage.setItem('guest_session', JSON.stringify({
+        userId: data.user.id,
+        nickname: data.user.nickname,
+        isGuest: true,
+      }));
+
+      console.log('[Guest Login] 訪客登入成功');
+
+      // 跳轉到主頁
+      router.push('/');
+    } catch (error: any) {
+      console.error('[Guest Login] Error:', error);
+      setGuestError('登入失敗，請稍後再試');
+      setGuestLoading(false);
     }
   }
 
@@ -139,6 +184,75 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-4">
+          {/* 訪客登入表單 */}
+          <form onSubmit={handleGuestLogin} className="space-y-3">
+            <div className="text-left">
+              <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-1">
+                帳號
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={guestUsername}
+                onChange={(e) => setGuestUsername(e.target.value)}
+                placeholder="test"
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-rose-400 transition-colors"
+                disabled={guestLoading}
+              />
+            </div>
+
+            <div className="text-left">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                密碼
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={guestPassword}
+                onChange={(e) => setGuestPassword(e.target.value)}
+                placeholder="test1234"
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-rose-400 transition-colors"
+                disabled={guestLoading}
+              />
+            </div>
+
+            {guestError && (
+              <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                {guestError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={guestLoading}
+              className="w-full px-6 py-4 bg-gradient-to-r from-rose-400 to-pink-500 text-white rounded-xl shadow-md hover:shadow-lg hover:from-rose-500 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
+            >
+              {guestLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  登入中...
+                </>
+              ) : (
+                <>
+                  🎮 訪客登入
+                </>
+              )}
+            </button>
+
+            <p className="text-xs text-slate-500 text-center">
+              使用 <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">test</span> / <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">test1234</span> 體驗 MEGAN
+            </p>
+          </form>
+
+          {/* 分隔線 */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-500">或</span>
+            </div>
+          </div>
           <button
             onClick={signInWithGoogle}
             disabled={loading}
@@ -173,16 +287,6 @@ export default function LoginPage() {
               </>
             )}
           </button>
-
-          {/* 分隔線 */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-500">或</span>
-            </div>
-          </div>
 
           {/* 微信登入按鈕 */}
           <LoginWithWeChatButton />
