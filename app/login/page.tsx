@@ -196,7 +196,7 @@ export default function LoginPage() {
                 value={guestUsername}
                 onChange={(e) => setGuestUsername(e.target.value)}
                 placeholder="test"
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-rose-400 transition-colors"
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-rose-400 transition-colors text-slate-700"
                 disabled={guestLoading}
               />
             </div>
@@ -211,7 +211,7 @@ export default function LoginPage() {
                 value={guestPassword}
                 onChange={(e) => setGuestPassword(e.target.value)}
                 placeholder="test1234"
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-rose-400 transition-colors"
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-rose-400 transition-colors text-slate-700"
                 disabled={guestLoading}
               />
             </div>

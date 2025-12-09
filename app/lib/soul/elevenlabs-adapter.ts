@@ -20,9 +20,9 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
     // Default parameters - Balanced for natural, warm conversation
     // Optimized for "夜光系靈魂": 柔、真、敏銳
     let params: ElevenLabsParams = {
-        stability: 0.5,   // Moderate stability for natural variation
+        stability: 0.6,   // Higher stability for more natural delivery
         similarity_boost: 0.75,  // Maintain voice character
-        style: 0.4,       // Subtle expressiveness (not theatrical)
+        style: 0.25,      // Lower style for subtle, natural expressiveness
         use_speaker_boost: true,
         text_prefix: "",
     };
@@ -33,43 +33,43 @@ export function mapEmotionToElevenLabs(tags: string[], text: string = ""): Eleve
     // Let the voice naturally express emotion through parameters, not forced tags
 
     if (tags.includes('whisper')) {
-        params.stability = 0.3;   // Lower for intimate variation
-        params.style = 0.6;       // Moderate style for gentle whisper
+        params.stability = 0.4;   // Moderate for intimate variation
+        params.style = 0.4;       // Lower style for gentle whisper
     }
 
     if (tags.includes('flirty') || tags.includes('playful')) {
-        params.stability = 0.4;   // Moderate stability
-        params.style = 0.65;      // Slightly more expressive
+        params.stability = 0.5;   // Moderate stability
+        params.style = 0.4;       // Subtle expressiveness
     }
 
     if (tags.includes('excited')) {
-        params.stability = 0.35;
-        params.style = 0.7;
+        params.stability = 0.45;
+        params.style = 0.45;      // Lower to avoid over-excitement
     }
 
     if (tags.includes('angry')) {
-        params.stability = 0.3;
-        params.style = 0.8;       // Higher for intense emotion
+        params.stability = 0.4;
+        params.style = 0.5;       // Lower to avoid over-intensity
     }
 
     if (tags.includes('sad') || tags.includes('tender') || tags.includes('softer')) {
-        params.stability = 0.45;  // Stable for controlled emotion
-        params.style = 0.45;      // Subtle for tender emotions
+        params.stability = 0.55;  // Higher stability for controlled emotion
+        params.style = 0.3;       // Very subtle for tender emotions
     }
 
     if (tags.includes('breathy')) {
-        params.stability = 0.4;
-        params.style = 0.55;
+        params.stability = 0.5;
+        params.style = 0.35;
     }
 
     if (tags.includes('sings')) {
-        params.stability = 0.3;
-        params.style = 0.85;      // Higher for singing
+        params.stability = 0.4;
+        params.style = 0.55;      // Lower to avoid theatrical singing
     }
 
     if (tags.includes('calm') || tags.includes('thoughtful')) {
-        params.stability = 0.55;  // Higher stability for calm
-        params.style = 0.35;      // Lower style for thoughtful delivery
+        params.stability = 0.65;  // Higher stability for calm
+        params.style = 0.2;       // Very low style for thoughtful delivery
     }
 
     // V3 Tag injection - ONLY if LLM included them or strong emotion detected
