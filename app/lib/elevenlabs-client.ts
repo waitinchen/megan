@@ -1,7 +1,7 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { mapEmotionToElevenLabs } from './soul/elevenlabs-adapter';
 
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "WUEPpaWdYrRSq7wyeO9O";
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "nhK7WPj1pwfQrucZFj1m"; // 心菲的專屬聲帶 ID
 
 // Lazy initialization to avoid requiring API key during build time
 let client: ElevenLabsClient | null = null;

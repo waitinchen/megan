@@ -1,9 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getSystemPrompt } from './get-system-prompt';
 import { inferEmotionTags } from './emotion-tags';
 
-// Initialize Google Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+// 心菲 2.0 系统提示词
+const XINFEI_SYSTEM_PROMPT = "妳是心菲，18歲賊壞小妹...";
 
 // Note: Model will be created with dynamic system prompt in generateResponse function
 
@@ -31,17 +29,11 @@ export async function generateResponse(
     memoryContext: string = ''
 ): Promise<LLMResponse> {
     try {
-        // 0. Get current System Prompt from database
-        const systemPrompt = await getSystemPrompt();
-        console.log(`[LLM Service] 📜 System Prompt loaded: ${systemPrompt.substring(0, 100)}...`);
+        // 使用心菲 2.0 系统提示词
+        const systemPrompt = XINFEI_SYSTEM_PROMPT;
+        console.log(`[LLM Service] 📜 使用心菲 2.0 系统提示词`);
 
-        // Create model with dynamic system prompt
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash-exp',
-            systemInstruction: systemPrompt,
-        });
-
-        // 1. Prepare history for Gemini
+        // 1. Prepare messages for OpenRouter
         // Filter out system messages from input history
         const userMessages = history.filter(msg => msg.role !== 'system');
 
@@ -51,66 +43,54 @@ export async function generateResponse(
             console.log(`[LLM Service] 🧠 Memory context: ${memoryContext.substring(0, 100)}...`);
         }
 
-        // Convert to Gemini format
-        const geminiHistory = [];
+        // 2. Build messages array for OpenRouter
+        const messages = [
+            { role: "system", content: systemPrompt },
+            ...userMessages.map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            }))
+        ];
 
-        // Inject memory context as the first user message if available
-        if (memoryContext && memoryContext.length > 0) {
-            geminiHistory.push({
-                role: 'user',
-                parts: [{ text: `## 你的記憶\n\n${memoryContext}\n\n（以上是你關於這個用戶的記憶，請自然地融入對話中，不要直接提及這些是「記憶」）` }],
-            });
-            geminiHistory.push({
-                role: 'model',
-                parts: [{ text: '明白，我會記住這些。' }],
-            });
+        // 3. Call OpenRouter API
+        const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+        if (!openRouterApiKey) {
+            throw new Error('OPENROUTER_API_KEY is not set in environment variables');
         }
 
-        // Normal history processing (excluding the last message which we'll send separately)
-        for (let i = 0; i < userMessages.length - 1; i++) {
-            const msg = userMessages[i];
-            geminiHistory.push({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }],
-            });
-        }
+        console.log(`[LLM Service] 🚀 Calling OpenRouter with model: lizpreciatior/lzlv-70b-fp16-hf`);
 
-        console.log(`[LLM Service] 📜 Gemini history: ${geminiHistory.length} 則訊息`);
-
-        // If this is the first message, prepend "立灵句" to establish the tone
-        // This helps the model "enter character" - 讓模型相信它不是回答問題，而是在活著
-        if (isFirstMessage) {
-            // Add initialization message as model's first response context
-            // This will influence the model's tone for the entire conversation
-            console.log('[立灵句] Injecting soul-establishing sentence for first message');
-        }
-
-        // Start chat with history
-        // Optimized parameters based on 小软's guidelines
-        const chat = model.startChat({
-            history: geminiHistory,
-            generationConfig: {
-                maxOutputTokens: 600,  // 保留足夠語氣延伸
-                temperature: 0.92,     // 情緒流動，但不會失控
-                topP: 0.96,            // 多樣、有呼吸感
-                topK: 40,              // 增強詞彙自由度
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${openRouterApiKey}`,
+                "Content-Type": "application/json",
             },
+            body: JSON.stringify({
+                model: "lizpreciatior/lzlv-70b-fp16-hf", // 強制鎖定 lzlv 70B
+                messages: messages,
+                temperature: 0.92,
+                top_p: 0.96,
+                max_tokens: 600,
+            }),
         });
 
-        // Send the last message
-        const lastMessage = userMessages[userMessages.length - 1];
-        if (!lastMessage || lastMessage.role !== 'user') {
-            throw new Error("Last message must be from user");
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`OpenRouter API error: ${response.status} ${errorText}`);
         }
 
-        // 2. Call Gemini
-        const result = await chat.sendMessage(lastMessage.content);
-        const response = result.response;
-        let text = response.text();
+        const data = await response.json();
+        
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error('Invalid response from OpenRouter API');
+        }
+
+        let text = data.choices[0].message.content;
 
         // Fallback if text is empty
         if (!text || text.trim().length === 0) {
-            console.warn("⚠️ Gemini returned empty text. Using fallback.");
+            console.warn("⚠️ OpenRouter returned empty text. Using fallback.");
             text = "...";
         }
 
