@@ -57,8 +57,10 @@ export async function generateResponse(
         }
 
         // 專為 lzlv-70b-fp16-hf 優化的提示詞
-        // 注意：如果 lizpreciatior/lzlv-70b-fp16-hf 不可用，會使用替代模型
-        const modelName = process.env.OPENROUTER_MODEL || "lizpreciatior/lzlv-70b-fp16-hf";
+        // 注意：lizpreciatior/lzlv-70b-fp16-hf 在 OpenRouter 上不存在（404错误）
+        // 使用替代模型：meta-llama/llama-3.1-70b-instruct（同样是 70B 模型，已验证可用）
+        // 如果未来 lzlv-70b 模型上线，可通过环境变量 OPENROUTER_MODEL 设置
+        const modelName = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.1-70b-instruct";
         console.log(`[LLM Service] 🚀 Calling OpenRouter with model: ${modelName}`);
 
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
