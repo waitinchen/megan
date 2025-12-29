@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "我是 | 梅根  🖤",
+  title: "我是 | 心菲  🖤",
   description: "Moon-Shadow Tone Spirit",
   icons: {
     icon: '/avatar.png',
