@@ -95,7 +95,7 @@ export default function Welcome() {
       <div className="bg-white/80 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800 mb-2">
-            嗨，我是 Megan 🌙
+            嗨，我是心菲 🌙
           </h1>
           <p className="text-slate-600">
             我該怎麼稱呼你呢？

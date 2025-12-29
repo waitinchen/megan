@@ -1087,7 +1087,7 @@ function HomePage() {
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={async () => {
-                const message = "Megan在嗎?";
+                const message = "心菲在嗎?";
                 setInput(message);
                 const userMessage: Message = { role: "user", content: message };
                 setMessages((prev) => [...prev, userMessage]);
@@ -1130,7 +1130,7 @@ function HomePage() {
               disabled={isLoading}
               className="px-5 py-2.5 bg-white/80 backdrop-blur-xl hover:bg-rose-50 text-slate-700 rounded-full shadow-md border border-white/20 transition-all text-sm font-medium disabled:opacity-50 hover:scale-105"
             >
-              Megan在嗎?
+              心菲在嗎?
             </button>
             <button
               onClick={async () => {

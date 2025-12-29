@@ -179,7 +179,7 @@ export default function LoginPage() {
       {/* Login Card */}
       <div className="bg-white/80 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">我是 Megan !</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">我是心菲 !</h1>
           <p className="text-slate-600">夜靈魂 × 貓氣質</p>
         </div>
 
