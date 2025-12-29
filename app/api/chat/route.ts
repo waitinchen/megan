@@ -59,9 +59,17 @@ export async function POST(request: Request) {
         // Only generate speech if there is valid text and it's not just "..."
         if (text && text.trim() !== "..." && text.trim().length > 0) {
             try {
-                console.log(`[Chat API] Generating speech for text: "${text.substring(0, 50)}..."`);
-                // Generate speech with the FULL text (including V3 tags)
-                const audioBuffer = await generateSpeech(text, emotionTags);
+                // Final cleanup: Remove any remaining parentheses before sending to ElevenLabs
+                // This is a safety net in case LLM still outputs parentheses despite prompt instructions
+                const cleanTextForAudio = text
+                    .replace(/\([^)]*\)/g, '')      // Remove (...) content
+                    .replace(/（[^）]*）/g, '')     // Remove （...） content
+                    .replace(/\s+/g, ' ')           // Clean up extra spaces
+                    .trim();
+
+                console.log(`[Chat API] Generating speech for text: "${cleanTextForAudio.substring(0, 50)}..."`);
+                // Generate speech with cleaned text (V3 tags preserved, parentheses removed)
+                const audioBuffer = await generateSpeech(cleanTextForAudio, emotionTags);
                 if (audioBuffer && audioBuffer.length > 0) {
                     audioBase64 = audioBuffer.toString('base64');
                     console.log(`[Chat API] ✅ Audio generated: ${audioBase64.length} chars (base64)`);

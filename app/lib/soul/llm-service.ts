@@ -97,10 +97,21 @@ export async function generateResponse(
             text = "...";
         }
 
-        // 3. Keep parentheses for action descriptions (required by 心菲 2.0 prompt)
-        // The prompt explicitly requires action descriptions in parentheses as visual cues
-        // These are part of the character's expression and should be preserved
-        // Note: Audio tags [whispers], [mischievously], etc. are also preserved for ElevenLabs V3
+        // 3. Remove all parentheses content (CRITICAL for TTS)
+        // ElevenLabs TTS will read parentheses content aloud, which sounds terrible
+        // Example: "(giggles)" → TTS reads "括號 giggles 括號"
+        // We must remove ALL parentheses before sending to TTS
+        const originalText = text;
+        text = text
+            .replace(/\([^)]*\)/g, '')      // Remove (...) content
+            .replace(/（[^）]*）/g, '')     // Remove （...） content
+            .replace(/\s+/g, ' ')           // Clean up extra spaces
+            .trim();
+
+        if (originalText !== text) {
+            console.log(`[Parentheses Removed] Original: "${originalText.substring(0, 100)}..."`);
+            console.log(`[Parentheses Removed] Cleaned: "${text.substring(0, 100)}..."`);
+        }
 
         // 4. Fix TTS pronunciation issues (同音字替換)
         // Replace words with problematic pronunciation with phonetically similar alternatives
