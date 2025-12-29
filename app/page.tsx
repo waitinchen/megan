@@ -971,7 +971,7 @@ function HomePage() {
               className="w-full max-w-md h-[85vh] shadow-2xl border-4 border-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 ease-in-out bg-white"
               onClick={() => setIsAvatarZoomed(false)}
             >
-              <img src="/avatar.png" alt="Megan" className="w-full h-full object-contain" />
+              <img src="/avatar.png" alt="心菲" className="w-full h-full object-contain" />
             </div>
           </div>
         </>

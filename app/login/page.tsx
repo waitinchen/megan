@@ -172,7 +172,7 @@ export default function LoginPage() {
       {/* Megan Avatar */}
       <div className="mb-8">
         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl">
-          <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
+          <img src="/avatar.png" alt="心菲" className="w-full h-full object-cover" />
         </div>
       </div>
 
