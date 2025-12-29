@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { SYSTEM_PROMPT as FALLBACK_SYSTEM_PROMPT } from './system-prompt';
+import { XINFEI_SYSTEM_PROMPT as FALLBACK_SYSTEM_PROMPT } from './xinfei-system-prompt';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
