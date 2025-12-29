@@ -1,7 +1,5 @@
 import { inferEmotionTags } from './emotion-tags';
-
-// 心菲 2.0 系统提示词
-const XINFEI_SYSTEM_PROMPT = "妳是心菲，18歲賊壞小妹...";
+import { XINFEI_SYSTEM_PROMPT } from './xinfei-system-prompt';
 
 // Note: Model will be created with dynamic system prompt in generateResponse function
 
@@ -97,18 +95,10 @@ export async function generateResponse(
             text = "...";
         }
 
-        // 3. Remove parentheses and action descriptions that would be read aloud by TTS
-        // This is critical because TTS will read "(停頓)" as "括號停頓括號"
-        const originalText = text;
-        text = text
-            .replace(/[（(][^）)]*[）)]/g, '') // Remove (...) and （...）
-            .replace(/\s+/g, ' ')              // Clean up extra spaces
-            .trim();
-
-        if (originalText !== text) {
-            console.log(`[Parentheses Removed] Original: "${originalText}"`);
-            console.log(`[Parentheses Removed] Cleaned: "${text}"`);
-        }
+        // 3. Keep parentheses for action descriptions (required by 心菲 2.0 prompt)
+        // The prompt explicitly requires action descriptions in parentheses as visual cues
+        // These are part of the character's expression and should be preserved
+        // Note: Audio tags [whispers], [mischievously], etc. are also preserved for ElevenLabs V3
 
         // 4. Fix TTS pronunciation issues (同音字替換)
         // Replace words with problematic pronunciation with phonetically similar alternatives
