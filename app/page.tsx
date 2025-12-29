@@ -803,12 +803,12 @@ function HomePage() {
             className="relative w-12 h-12 border-2 border-white/50 shadow-sm rounded-full overflow-hidden cursor-pointer transition-all duration-300 ease-in-out hover:scale-105"
             onClick={() => setIsAvatarZoomed(true)}
           >
-            <img src="/avatar.png" alt="Megan" className="w-full h-full object-cover" />
+            <img src="/avatar.png" alt="心菲" className="w-full h-full object-cover" />
           </div>
 
           <div>
             <h1 className="font-semibold text-slate-800">
-              Megan
+              心菲
             </h1>
             <div className="flex items-center gap-1.5">
               <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400" : "bg-slate-300"}`} />

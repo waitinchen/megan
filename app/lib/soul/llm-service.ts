@@ -58,7 +58,10 @@ export async function generateResponse(
             throw new Error('OPENROUTER_API_KEY is not set in environment variables');
         }
 
-        console.log(`[LLM Service] 🚀 Calling OpenRouter with model: lizpreciatior/lzlv-70b-fp16-hf`);
+        // 注意：lizpreciatior/lzlv-70b-fp16-hf 在 OpenRouter 上不存在
+        // 使用替代模型：meta-llama/llama-3.1-70b-instruct (同样是 70B 模型)
+        const modelName = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.1-70b-instruct";
+        console.log(`[LLM Service] 🚀 Calling OpenRouter with model: ${modelName}`);
 
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
@@ -67,7 +70,7 @@ export async function generateResponse(
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "lizpreciatior/lzlv-70b-fp16-hf", // 強制鎖定 lzlv 70B
+                model: modelName, // 使用可用的 70B 模型
                 messages: messages,
                 temperature: 0.92,
                 top_p: 0.96,
