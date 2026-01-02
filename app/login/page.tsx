@@ -238,10 +238,6 @@ export default function LoginPage() {
                 </>
               )}
             </button>
-
-            <p className="text-xs text-slate-500 text-center">
-              使用 <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">test</span> / <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">test1234</span> 體驗 MEGAN
-            </p>
           </form>
 
           {/* 分隔線 */}
